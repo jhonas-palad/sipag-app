@@ -1,114 +1,142 @@
 import {
-  View,
   TextInput,
   TextInputProps,
   StyleSheet,
-  type NativeSyntheticEvent,
-  type TextInputFocusEventData,
-  type StyleProp,
-  type ViewStyle,
-  type ViewProps,
+  NativeSyntheticEvent,
+  TextInputChangeEventData,
+  TextInputFocusEventData,
 } from "react-native";
-
-import { COLOR_PALLETE } from "@/config/colors";
+import { mergeRefs } from "@/utils/refs";
+import { InputProps, Input as RNEInput, useTheme } from "@rneui/themed";
 import React, {
   useState,
   forwardRef,
-  createContext,
-  useContext,
-  useLayoutEffect,
-  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
 } from "react";
-import { useController } from "react-hook-form";
-type Props = TextInputProps;
-
-type FocusBlurStyles = {
-  borderColor: "gray" | "blue";
-  borderWidth: 1.5 | 2 | 3;
-};
+import { FormDescription, FormItem } from "./Form";
 
 export const Input = forwardRef<
   React.ElementRef<typeof TextInput>,
-  React.ComponentPropsWithoutRef<typeof TextInput>
->(({ style, onBlur, onFocus, ...props }, ref) => {
-  const { blurMode, focusMode } = useInputWrapper();
-  const handleFocus = (
-    event: NativeSyntheticEvent<TextInputFocusEventData>
+  React.PropsWithoutRef<InputProps>
+>(
+  (
+    {
+      style,
+      onFocus,
+      onBlur,
+      label,
+      disabled,
+      multiline,
+      inputContainerStyle,
+      ...props
+    },
+    ref
   ) => {
-    event.preventDefault();
-    focusMode?.();
-    onFocus?.(event);
-  };
-  const handleBlur = (event: NativeSyntheticEvent<TextInputFocusEventData>) => {
-    event.preventDefault();
-    blurMode?.();
-    onBlur?.(event);
-  };
-  return (
-    <TextInput
-      ref={ref}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      style={[{ flex: 1 }, style]}
-      {...props}
-    />
-  );
-});
-
-type InputWrapperContext = {
-  focusMode: () => void;
-  blurMode: () => void;
-};
-
-const InputWrapperContext = createContext<InputWrapperContext>(
-  {} as InputWrapperContext
+    const innerRef = useRef<TextInput>(null);
+    const upperCaseLabel = useMemo(
+      () => label?.toString().toUpperCase(),
+      [label]
+    );
+    const [focused, setFocused] = useState<boolean>(false);
+    const { theme } = useTheme();
+    const handleFocus = useCallback(
+      (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+        onFocus?.(e);
+        setFocused(true);
+      },
+      [onFocus]
+    );
+    const handleBlur = useCallback(
+      (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+        onBlur?.(e);
+        setFocused(false);
+      },
+      [onBlur]
+    );
+    const innerStyle = useMemo<TextInputProps["style"]>(() => {
+      return {
+        borderColor: focused ? theme.colors.primary : "transparent",
+        borderRadius: theme.spacing.lg,
+        backgroundColor: !disabled ? theme.colors.grey5 : theme.colors.grey4,
+        borderWidth: 1.5,
+        borderBottomWidth: 1.5, //We need to set this, because borderBottomWidth is implictly set by REInput
+      };
+    }, [theme, focused, disabled]);
+    return (
+      <RNEInput
+        multiline={multiline}
+        label={upperCaseLabel}
+        ref={mergeRefs([ref, innerRef])}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        placeholderTextColor={theme.colors.grey0}
+        containerStyle={{ paddingHorizontal: 0 }}
+        labelStyle={{ ...styles.labelStyle, color: theme.colors.grey0 }}
+        inputStyle={[
+          styles.input,
+          {
+            padding: theme.spacing.lg,
+            color: theme.colors.black,
+            textAlignVertical: multiline ? "top" : "center",
+          },
+          style,
+        ]}
+        inputContainerStyle={[innerStyle, inputContainerStyle]}
+        disabled={disabled}
+        {...props}
+      />
+    );
+  }
 );
 
-export const InputWrapper = ({
-  style,
-  children,
-  focus = false,
-}: Pick<ViewProps, "style" | "children"> & { focus?: boolean }) => {
-  const [_focus, setFocus] = useState<boolean>(focus);
-  const focusMode = () => setFocus(true);
-  const blurMode = () => setFocus(false);
-  return (
-    <InputWrapperContext.Provider value={{ focusMode, blurMode }}>
-      <View style={[styles.input, _focus ? styles.focus : styles.blur, style]}>
-        {children}
-      </View>
-    </InputWrapperContext.Provider>
-  );
-};
-
-const useInputWrapper = (): InputWrapperContext => {
-  const methods = useContext(InputWrapperContext);
-
-  if (!Object.values(methods).length) {
-    throw new Error("useInputWrapper must be used within <InputWrapper/>");
+export const TextArea = forwardRef<
+  React.ElementRef<typeof TextInput>,
+  React.PropsWithoutRef<Omit<InputProps, "multiline">> & {
+    asFormItem: boolean;
   }
+>(({ asFormItem, maxLength = 150, onChange, ...props }, ref) => {
+  const [count, setCount] = useState<number>(maxLength);
+  const handleCharsLeft = useCallback(
+    (e: NativeSyntheticEvent<TextInputChangeEventData>) => {
+      setCount((prevCount) => --prevCount);
+      onChange?.(e);
+    },
+    [count]
+  );
+  if (asFormItem) {
+    return (
+      <FormItem>
+        <Input
+          multiline
+          maxLength={maxLength}
+          onChange={handleCharsLeft}
+          {...props}
+        />
+        <FormDescription style={{ textAlign: "right" }}>
+          {count} characters left
+        </FormDescription>
+      </FormItem>
+    );
+  }
+  return <Input ref={ref} multiline maxLength={maxLength} {...props} />;
+});
 
-  return methods;
-};
+TextArea.displayName = "TextArea";
 
 const styles = StyleSheet.create({
   input: {
-    borderRadius: 12,
-    padding: 8,
-    paddingHorizontal: 16,
     fontSize: 16,
-    fontWeight: "bold",
-    flexDirection: "row",
-    alignItems: "center",
-    borderColor: "transparent",
-    borderWidth: 2,
-    backgroundColor: COLOR_PALLETE.secondary,
+    fontWeight: "medium",
+  },
+
+  labelStyle: {
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: "medium",
   },
   inputWithIcon: {
     flex: 1,
-  },
-  blur: {},
-  focus: {
-    borderColor: COLOR_PALLETE.primary,
   },
 });

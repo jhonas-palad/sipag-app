@@ -1,54 +1,55 @@
-import { StyleSheet, Image, View, SafeAreaView } from "react-native";
-import { LinkButton } from "@/components/ui/Button";
-import { ThemedText } from "@/components/ThemedText";
+import {
+  StyleSheet,
+  Image,
+  View,
+  SafeAreaView,
+  ScrollView,
+  KeyboardAvoidingView,
+} from "react-native";
 import { SigninForm } from "@/components/forms/auth/SigninForm";
 import React from "react";
-import { KeyboardAvoidingWrapper } from "@/components/KeyboardAvoidingWrapper";
+import { Button } from "@/components/ui/Button";
+import { Text, useTheme } from "@rneui/themed";
 import { COLOR_PALLETE } from "@/config/colors";
+import { Link } from "expo-router";
 type Props = {};
 
 const LoginScreen = (props: Props) => {
+  const { theme } = useTheme();
   return (
-    <View
+    <KeyboardAvoidingView
       style={{
-        justifyContent: "space-between",
         flex: 1,
-        paddingTop: 100,
+        justifyContent: "space-between",
+        paddingTop: 50,
         paddingHorizontal: 24,
-        paddingBottom: 32
+        paddingBottom: 32,
+        backgroundColor: theme.colors.background,
       }}
     >
       <View>
         <View style={styles.headingContainer}>
-          <Image
-            style={{ height: 150, width: 150 }}
+          {/* <Image
+            style={{ height: 100, width: 100 }}
             source={require("@/assets/images/sipag-logo.png")}
-          />
-          <ThemedText type="default">Sign in to your account</ThemedText>
+          /> */}
+          <Text h4>Sign in to your account</Text>
         </View>
-        <View style={{}}>
-          <SigninForm />
-          <LinkButton variant="link" href="/" style={{}}>
-            <ThemedText
-              style={{ color: "gray", textAlign: "center" }}
-              type="defaultSemiBold"
-            >
-              Forgot password?
-            </ThemedText>
-          </LinkButton>
-        </View>
+        <SigninForm />
       </View>
       <View>
-        <LinkButton variant="outline" href="/auth/signup" style={{}}>
-          <ThemedText
-            style={{ color: COLOR_PALLETE.primary, textAlign: "center" }}
-            type="defaultSemiBold"
+        <Link href="/auth/(sign-up)" asChild style={{}}>
+          <Button
+            size="lg"
+            type="outline"
+            buttonStyle={{ borderWidth: 1.5 }}
+            radius="lg"
           >
             Create new account
-          </ThemedText>
-        </LinkButton>
+          </Button>
+        </Link>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 

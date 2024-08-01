@@ -1,5 +1,5 @@
 import zod from "zod";
-
+import { ImageSchema } from "./image";
 export const email = zod
   .string()
   .min(1, { message: "Email is required" })
@@ -13,43 +13,48 @@ export const phone_number = zod
   })
   .trim();
 
-export const password = zod
-  .string()
-  .min(8, { message: "Password must contain at least 8 characters" });
+// export const password = zod
+//   .string()
+//   .min(8, { message: "Password must contain at least 8 characters" });
 
-export const useCredentialSchema = (using: "email" | "phone_number") => {
-  if (!["email", "phone_number"].includes(using)) {
-    throw new Error(`Invalid argument '${using}'.`);
-  }
+export const SignupSchema = zod.object({
+  first_name: zod.string().min(1, { message: "First name is required" }),
+  last_name: zod.string().min(1, { message: "Last name is required" }),
+  email: zod
+    .string()
+    .min(1, { message: "Email is required" })
+    .email({ message: "Invalid format for email address" })
+    .trim(),
+  phone_number: zod
+    .string({ required_error: "Phone number is required" })
+    .min(10, { message: "Phone number must contain at least 10 digits" })
+    .max(11, {
+      message: "Phone number should not exceed to more than 11 digits",
+    })
+    .trim(),
+  password: zod
+    .string()
+    .min(8, { message: "Password must contain at least 8 characters" }),
+  photo: ImageSchema.pick({ url: true }).nullable(),
+});
 
-  return zod.object({
-    [using === "email" ? "email" : "phone_number"]:
-      using === "email" ? email : phone_number,
-    password,
-  });
-};
-export const UserCredentialSchema = zod
-  .object({
-    email: email,
-    phone_number: zod
-      .string({ required_error: "Phone number is required" })
-      .min(10, { message: "Phone number must contain at least 10 digits" })
-      .max(11, {
-        message: "Phone number should not exceed to more than 11 digits",
-      })
-      .trim(),
-    password: zod
-      .string()
-      .min(8, { message: "Password must contain at least 8 characters" }),
-  })
-  .refine(
-    (credentials) => {
-      if (credentials.email === "" && credentials.phone_number === "") {
-        return false;
-      }
-      return true;
-    },
-    { path: ["non_field"], message: "Email or Phone Number is required" }
-  );
+const SignupSchemaOptional = SignupSchema.partial({
+  email: true,
+  last_name: true,
+  first_name: true,
+  password: true,
+  phone_number: true,
+  photo: true,
+});
+export type SignupSchemaAllOptionalType = zod.infer<
+  typeof SignupSchemaOptional
+>;
+export type SignupFormSchemaType = zod.infer<typeof SignupSchema>;
 
-export type UserCredentials = zod.infer<typeof UserCredentialSchema>;
+export const SiginFormSchema = zod.object({
+  email: zod.string().trim().optional(),
+  phone_number: zod.string().trim().optional(),
+  password: zod.string().min(1, { message: "Please enter your password" }),
+});
+
+export type SiginFormSchemaType = zod.infer<typeof SiginFormSchema>;

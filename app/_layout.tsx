@@ -1,19 +1,22 @@
 import "react-native-reanimated";
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Stack, Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useLayoutEffect } from "react";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient({});
 
 export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-
   useLayoutEffect(() => {
     if (loaded) {
       SplashScreen.hideAsync();
@@ -23,27 +26,15 @@ export default function RootLayout() {
   if (!loaded) {
     return null;
   }
-
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "red" }}>
-      <ThemeProvider>
-        <BottomSheetModalProvider>
-          {/* <StatusBar backgroundColor="red" /> */}
-          <Stack>
-            <Stack.Screen
-              name="(main)"
-              redirect={false}
-              options={{
-                headerShown: false,
-                statusBarColor: "transparent",
-                statusBarTranslucent: true,
-              }}
-            />
-            <Stack.Screen name="auth" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </BottomSheetModalProvider>
-      </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <BottomSheetModalProvider>
+            <Slot />
+          </BottomSheetModalProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
     </GestureHandlerRootView>
   );
 }

@@ -4,8 +4,9 @@ import {
   useContext,
   forwardRef,
   useId,
+  useMemo,
 } from "react";
-
+import { View } from "./View";
 import {
   Controller,
   ControllerProps,
@@ -14,6 +15,7 @@ import {
   FormProvider,
   useFormContext,
 } from "react-hook-form";
+import { Text, TextProps, useTheme } from "@rneui/themed";
 import { ThemedText } from "@/components/ThemedText";
 import { StyleSheet } from "react-native";
 import { COLOR_PALLETE } from "@/config/colors";
@@ -99,31 +101,71 @@ const FormLabel = ({ children }: PropsWithChildren) => {
   );
 };
 
-const FormDescription = ({ children }: PropsWithChildren) => {
+const FormDescription = ({
+  children,
+  style,
+  ...props
+}: PropsWithChildren & TextProps) => {
+  const { theme } = useTheme();
   return (
-    <ThemedText type="small" style={[styles.baseText, styles.formDescription]}>
+    <Text
+      style={[
+        styles.baseText,
+        styles.formDescription,
+        { fontSize: 16, color: theme.colors.grey1 },
+        style,
+      ]}
+      {...props}
+    >
       {children}
-    </ThemedText>
+    </Text>
   );
 };
 const FormMessage = ({ children }: PropsWithChildren) => {
   const { error } = useFormField();
-  const body = error ? String(error?.message) : children;
+  const body = useMemo(() => {
+    if (!error) {
+      return children;
+    }
+    if (
+      (error?.message as any) instanceof Array &&
+      error?.message?.length! > 1
+    ) {
+      return (error?.message as any).map((err_msg: string, index: number) => (
+        <Text key={index} style={[styles.baseText, styles.formMessage]}>
+          - {err_msg}
+        </Text>
+      ));
+    }
+    return String(error?.message);
+  }, [error]);
 
   if (!body) {
     return null;
   }
-
+  if (body instanceof Array) {
+    return (
+      <View transparent style={{ gap: 4 }}>
+        {body}
+      </View>
+    );
+  }
   return (
-    <ThemedText style={[styles.baseText, styles.formMessage]}>
+    <Text
+      style={[
+        styles.baseText,
+        styles.formMessage,
+        { display: "flex", flexDirection: "column" },
+      ]}
+    >
       {body}
-    </ThemedText>
+    </Text>
   );
 };
 
 const styles = StyleSheet.create({
   baseText: {
-    marginVertical: 8,
+    marginVertical: 0,
   },
   formLabel: {},
   formLabelError: {

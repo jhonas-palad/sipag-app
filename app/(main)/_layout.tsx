@@ -1,8 +1,9 @@
 import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { Linking } from "react-native";
-import { Link } from "expo-router";
-
+import { Link, Redirect } from "expo-router";
+import { useAuthSession } from "@/store/auth";
+import { useShallow } from "zustand/react/shallow";
 type Props = {};
 
 function CustomDrawerContent(props: any) {
@@ -21,16 +22,24 @@ function CustomDrawerContent(props: any) {
   );
 }
 
-const HomeLayout = (props: Props) => {
+const MainLayout = (props: Props) => {
+  const { isLoading, session } = useAuthSession(
+    useShallow((state) => ({
+      isLoading: state.isLoading,
+      session: state.session,
+    }))
+  );
+  if (!session) {
+    return <Redirect href="/auth" />;
+  }
   return (
-    
-      <Drawer
-        screenOptions={{ headerShown: false }}
-        drawerContent={(props) => <CustomDrawerContent {...props} />}
-      >
-        {/* All other screens should be hidden */}
-      </Drawer>
+    <Drawer
+      screenOptions={{ headerShown: false }}
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+    >
+      {/* All other screens should be hidden */}
+    </Drawer>
   );
 };
 
-export default HomeLayout;
+export default MainLayout;

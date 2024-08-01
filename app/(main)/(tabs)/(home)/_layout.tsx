@@ -1,17 +1,36 @@
 import { View, Text } from "react-native";
 import React from "react";
 import { Stack } from "expo-router";
+import { useTheme } from "@rneui/themed";
 
-import { LinkButton } from "@/components/ui/Button";
-type Props = {};
-
-const HomeTabLayout = (props: Props) => {
+const HomeTabLayout = () => {
+  const { theme } = useTheme();
   return (
     <>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerBackTitleVisible: false,
+          headerShown: false,
+          headerStyle: {
+            backgroundColor: theme.colors.background,
+          },
+          headerTitleStyle: { color: theme.colors.black },
+        }}
+      >
         <Stack.Screen name="index" />
-        <Stack.Screen name="create-post" options={{ headerShown: true }}>
-        </Stack.Screen>
+        <Stack.Screen
+          name="choose-location"
+          options={{ headerShown: true, title: "Create a waste report" }}
+        />
+        <Stack.Screen
+          name="create-waste-report"
+          options={{
+            headerShown: true,
+            // headerTransparent: true,
+            headerShadowVisible: false,
+            title: "Create Waste Report",
+          }}
+        />
       </Stack>
     </>
   );

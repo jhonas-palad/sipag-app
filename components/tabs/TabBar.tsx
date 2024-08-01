@@ -1,7 +1,7 @@
 import { View, StyleSheet } from "react-native";
 import React from "react";
 import { TabBarButton } from "./TabBarButton";
-import { useTabFeedSheetStore } from "@/store/tabfeed-sheet";
+import { useToggleHideTab } from "@/store/tab";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useTheme } from "@rneui/themed";
 
@@ -12,7 +12,7 @@ export const TabBar = ({
   navigation,
 }: BottomTabBarProps) => {
   const { theme } = useTheme();
-  const hide = useTabFeedSheetStore((state) => state.hide);
+  const hide = useToggleHideTab((state) => state.hide);
   return (
     <View
       style={[
@@ -20,6 +20,7 @@ export const TabBar = ({
         {
           backgroundColor: theme.colors.white,
           display: hide ? "none" : "flex",
+          opacity:0.5
         },
       ]}
     >

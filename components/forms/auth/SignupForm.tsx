@@ -1,39 +1,111 @@
-import { useEffect, useState } from "react";
-import { View, Pressable, Alert, StyleSheet } from "react-native";
-import { ThemedText } from "@/components/ThemedText";
-import { Input, InputWrapper } from "@/components/ui/Input";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { StyleSheet } from "react-native";
+import { View } from "@/components/ui/View";
+import { Input } from "@/components/ui/Input";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
-import { Button, LinkButton } from "@/components/ui/Button";
-import { Feather } from "@expo/vector-icons";
+import { Button } from "@/components/ui/Button";
 import { useForm } from "react-hook-form";
-import { UserCredentialSchema, useCredentialSchema } from "@/schemas/auth";
+import { SignupSchema, type SignupFormSchemaType } from "@/schemas/auth";
 import React from "react";
-import { COLOR_PALLETE } from "@/config/colors";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
+import { useSignupFormState } from "@/store/create-account-form";
+import { useShallow } from "zustand/react/shallow";
+import { signUpUser } from "@/data/auth";
+import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
+import { ErrorDialog } from "./ErrorDialog";
+import { ResponseError } from "@/errors/response-error";
+
 type Props = {};
 
 export const SignupForm = (props: Props) => {
   const [using, setUsing] = useState<"email" | "phone_number">("phone_number");
-  const schema = useCredentialSchema(using);
-  const form = useForm({
-    resolver: zodResolver(schema),
+  const { getFormState, setFormState, phone_number, email, password } =
+    useSignupFormState(
+      useShallow((state) => ({
+        getFormState: state.getFormState,
+        setFormState: state.setFormState,
+        phone_number: state.phone_number,
+        email: state.email,
+        password: state.password,
+      }))
+    );
+  const resolver = useMemo(() => {
+    if (using === "email") {
+      return SignupSchema.omit({
+        first_name: true,
+        last_name: true,
+        phone_number: true,
+        photo: true,
+      });
+    }
+    return SignupSchema.omit({
+      first_name: true,
+      last_name: true,
+      email: true,
+      photo: true,
+    });
+  }, [using]);
+  const form = useForm<SignupFormSchemaType>({
+    resolver: zodResolver(resolver),
     defaultValues: {
-      phone_number: "",
-      email: "",
-      password: "",
+      password: password,
+      email: email,
+      phone_number: phone_number,
     },
   });
-  useEffect(() => {
-    form.setValue(using, form.getValues(using));
 
+  // const { mutateAsync, data, status } = signUpUser({
+  //   async onError(error, variables, context) {
+  //     if (error instanceof ResponseError) {
+  //       const { errors } = await error.getErrResponseData();
+  //       if (NON_FIELD_ERROR in errors!) {
+  //         form.setError(using, { message: errors?.[NON_FIELD_ERROR] });
+  //       }
+  //       if (ERR_DETAIL in errors!) {
+  //         form.setError("root", { message: errors?.[ERR_DETAIL] });
+  //       }
+  //       Object.keys(errors!).forEach((err_field: string) => {
+  //         form.setError(err_field as keyof SignupFormSchemaType, {
+  //           message: errors?.[err_field],
+  //         });
+  //       });
+  //       return;
+  //     }
+
+  //     form.setError("root", { message: (error as Error)?.message as string });
+  //   },
+  //   async onSuccess(data, variables, context) {
+  //     const { data: user } = data!;
+  //     setFormState({ ...user });
+  //     router.replace("/auth/upload-image");
+  //   },
+  // });
+
+  const handleSubmit = useCallback(
+    (data: SignupFormSchemaType) => {
+      // mutateAsync(data);
+      setFormState({ ...data });
+      router.push("/auth/(sign-up)/upload-image");
+    },
+    [setFormState]
+  );
+
+  useEffect(() => {
+    form.resetField(using);
     return () => {
-      form.clearErrors(using);
+      setFormState({ [using]: "" });
     };
   }, [using]);
 
   return (
     <Form {...form}>
+      {form.formState.errors.root?.message && (
+        <ErrorDialog
+          title="Signup Failed"
+          description={form.formState.errors.root?.message}
+        />
+      )}
       {using === "phone_number" ? (
         <FormField
           control={form.control}
@@ -41,16 +113,15 @@ export const SignupForm = (props: Props) => {
           render={({ field }) => {
             return (
               <FormItem>
-                <View style={styles.inputContainer}>
-                  <InputWrapper>
-                    <Input
-                      {...field}
-                      onChangeText={field.onChange}
-                      keyboardType="decimal-pad"
-                      placeholder="Phone number"
-                    />
-                  </InputWrapper>
-                  <FormMessage />
+                <View transparent style={styles.inputContainer}>
+                  <Input
+                    {...field}
+                    label="Phone number"
+                    onChangeText={field.onChange}
+                    keyboardType="decimal-pad"
+                    placeholder="Enter a Phone number"
+                    ErrorComponent={() => <FormMessage />}
+                  />
                 </View>
               </FormItem>
             );
@@ -63,16 +134,15 @@ export const SignupForm = (props: Props) => {
           render={({ field }) => {
             return (
               <FormItem>
-                <View style={styles.inputContainer}>
-                  <InputWrapper>
-                    <Input
-                      {...field}
-                      onChangeText={field.onChange}
-                      keyboardType="email-address"
-                      placeholder="Email"
-                    />
-                  </InputWrapper>
-                  <FormMessage />
+                <View transparent style={styles.inputContainer}>
+                  <Input
+                    {...field}
+                    label="Email"
+                    onChangeText={field.onChange}
+                    keyboardType="email-address"
+                    placeholder="Enter an Email"
+                    ErrorComponent={() => <FormMessage />}
+                  />
                 </View>
               </FormItem>
             );
@@ -84,61 +154,54 @@ export const SignupForm = (props: Props) => {
         name="password"
         render={({ field }) => (
           <FormItem>
-            <View style={styles.inputContainer}>
-              <InputWrapper>
-                <Input
-                  {...field}
-                  onChangeText={field.onChange}
-                  placeholder="Password"
-                  secureTextEntry
-                />
-                <Pressable style={{ marginHorizontal: 12 }}>
-                  <Feather name="eye-off" size={16} color="gray" />
-                </Pressable>
-              </InputWrapper>
-              <FormMessage />
+            <View transparent style={styles.inputContainer}>
+              <Input
+                label="Password"
+                {...field}
+                onChangeText={field.onChange}
+                placeholder="Enter a Password"
+                secureTextEntry
+                ErrorComponent={() => <FormMessage />}
+              />
             </View>
           </FormItem>
         )}
       />
-
       <Button
-        // href="/(auth)/upload-image"
-        // push
-        onPress={form.handleSubmit(
-          (data) => {
-            console.log("navigating");
-            router.push("/(auth)/upload-image");
-          },
-          (err) => console.log(err)
-        )}
-        variant="primary"
-        style={{ marginBottom: 20 }}
-      >
-        <ThemedText type="defaultSemiBold" style={{ color: "white" }}>
-          Continue
-        </ThemedText>
-      </Button>
-      <Button
-        variant="link"
+        type="clear"
+        radius="lg"
         onPress={() =>
           setUsing((prev) => (prev === "email" ? "phone_number" : "email"))
         }
-        style={{ alignSelf: "center", padding: 0 }}
+        containerStyle={{ alignSelf: "center", marginBottom: 12 }}
       >
-        <ThemedText
-          type="defaultSemiBold"
-          style={{ color: COLOR_PALLETE.primary }}
-        >
-          Use {using === "email" ? "phone number" : "email"} instead?
-        </ThemedText>
+        Use {using === "email" ? "phone number" : "email"} instead?
       </Button>
+      <Button
+        radius="lg"
+        size="lg"
+        raised
+        onPress={form.handleSubmit(handleSubmit)}
+        style={{ marginBottom: 20 }}
+      >
+        Continue
+      </Button>
+      <Link
+        href={{
+          pathname: "/auth/(sign-up)/upload-image",
+          params: { new_user: 1 },
+        }}
+        replace
+        style={{ marginBottom: 20 }}
+      >
+        Continue
+      </Link>
     </Form>
   );
 };
 
 const styles = StyleSheet.create({
   inputContainer: {
-    marginBottom: 28,
+    marginBottom: 12,
   },
 });
