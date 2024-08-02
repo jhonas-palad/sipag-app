@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Link, router } from "expo-router";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
-import { signUpUser } from "@/data/auth";
+import { validateCredentials } from "@/data/auth";
 import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
 import { ErrorDialog } from "./ErrorDialog";
 import { ResponseError } from "@/errors/response-error";
@@ -55,38 +55,41 @@ export const SignupForm = (props: Props) => {
     },
   });
 
-  // const { mutateAsync, data, status } = signUpUser({
-  //   async onError(error, variables, context) {
-  //     if (error instanceof ResponseError) {
-  //       const { errors } = await error.getErrResponseData();
-  //       if (NON_FIELD_ERROR in errors!) {
-  //         form.setError(using, { message: errors?.[NON_FIELD_ERROR] });
-  //       }
-  //       if (ERR_DETAIL in errors!) {
-  //         form.setError("root", { message: errors?.[ERR_DETAIL] });
-  //       }
-  //       Object.keys(errors!).forEach((err_field: string) => {
-  //         form.setError(err_field as keyof SignupFormSchemaType, {
-  //           message: errors?.[err_field],
-  //         });
-  //       });
-  //       return;
-  //     }
+  const { mutateAsync, data, status } = validateCredentials({
+    async onError(error, variables, context) {
+      if (error instanceof ResponseError) {
+        const errors = error.errors;
+        console.log(errors);
+        if (NON_FIELD_ERROR in errors!) {
+          form.setError(using, { message: errors?.[NON_FIELD_ERROR] });
+        }
+        if (ERR_DETAIL in errors!) {
+          form.setError("root", { message: errors?.[ERR_DETAIL] });
+        }
+        Object.keys(errors!).forEach((err_field: string) => {
+          form.setError(err_field as keyof SignupFormSchemaType, {
+            message: errors?.[err_field],
+          });
+        });
+        return;
+      }
 
-  //     form.setError("root", { message: (error as Error)?.message as string });
-  //   },
-  //   async onSuccess(data, variables, context) {
-  //     const { data: user } = data!;
-  //     setFormState({ ...user });
-  //     router.replace("/auth/upload-image");
-  //   },
-  // });
+      form.setError("root", { message: (error as Error)?.message as string });
+    },
+    async onSuccess(response_data) {
+      const formValues = form.getValues();
+      const {data } = response_data;
+      setFormState({
+        ...data,
+        password: formValues["password"],
+      });
+      router.push("/auth/(sign-up)/upload-image");
+    },
+  });
 
   const handleSubmit = useCallback(
-    (data: SignupFormSchemaType) => {
-      // mutateAsync(data);
-      setFormState({ ...data });
-      router.push("/auth/(sign-up)/upload-image");
+    async (data: SignupFormSchemaType) => {
+      await mutateAsync(data);
     },
     [setFormState]
   );
@@ -181,21 +184,12 @@ export const SignupForm = (props: Props) => {
         radius="lg"
         size="lg"
         raised
+        buttonStyle={{ borderWidth: 1.5 }}
         onPress={form.handleSubmit(handleSubmit)}
         style={{ marginBottom: 20 }}
       >
         Continue
       </Button>
-      <Link
-        href={{
-          pathname: "/auth/(sign-up)/upload-image",
-          params: { new_user: 1 },
-        }}
-        replace
-        style={{ marginBottom: 20 }}
-      >
-        Continue
-      </Link>
     </Form>
   );
 };

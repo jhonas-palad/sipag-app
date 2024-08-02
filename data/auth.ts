@@ -5,13 +5,14 @@ import {
   UseMutationOptions,
 } from "@tanstack/react-query";
 import {
+  SignupSchema,
   type SiginFormSchemaType,
   type SignupFormSchemaType,
 } from "@/schemas/auth";
 import { UserDetailsType } from "@/schemas/users";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
-
+import * as zod from "zod";
 export const AUTH_USER = "AUTH_USER";
 
 export type AuthTokenResponse = unknown;
@@ -36,25 +37,35 @@ export function signInUser(
   return resultMutation;
 }
 
-export function signUpUser(
+const UserCredentialsSchema = SignupSchema.omit({
+  first_name: true,
+  last_name: true,
+  photo: true,
+}).partial({
+  email: true,
+  phone_number: true,
+});
+
+type UserCredentialsSchemaType = zod.infer<typeof UserCredentialsSchema>;
+export function validateCredentials(
   opts?: Omit<
     UseMutationOptions<
-      SuccessResponseData<UserDetailsType>,
+      SuccessResponseData<Omit<UserCredentialsSchemaType, "password">>,
       ResponseError,
-      SignupFormSchemaType
+      UserCredentialsSchemaType
     >,
     "mutationKey" | "mutationFn"
   >
 ) {
   const resultMutation = useMutation<
-    SuccessResponseData<UserDetailsType>,
+    SuccessResponseData<Omit<UserCredentialsSchemaType, "password">>,
     ResponseError,
-    SignupFormSchemaType
+    UserCredentialsSchemaType
   >({
     mutationKey: [AUTH_USER],
-    async mutationFn(credentials: SignupFormSchemaType) {
+    async mutationFn(credentials: UserCredentialsSchemaType) {
       return await postData<UserDetailsType>(
-        "/api/v1/auth/signup",
+        "/api/v1/users/credentials",
         JSON.stringify(credentials)
       );
     },

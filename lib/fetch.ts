@@ -11,7 +11,6 @@ export async function fetchData<T extends any>(
   opts?: RequestInit
 ): Promise<SuccessResponseData<T>> {
   url = new URL(url, BASE_URL);
-
   let response = await fetch(url, { ...opts });
   let badStatus = false;
   if (!response.ok) {

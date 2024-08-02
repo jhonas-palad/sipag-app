@@ -110,6 +110,7 @@ export const IdentityForm = (props: Props) => {
         radius="lg"
         size="lg"
         containerStyle={{ marginTop: 16 }}
+        buttonStyle={{ borderWidth: 1.5 }}
         onPress={form.handleSubmit(handleSubmit)}
         raised
       >
