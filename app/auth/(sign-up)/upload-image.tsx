@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
-import { Text } from "@rneui/themed";
+import { Text } from "@/components/ui/Text";
 import { Button } from "@/components/ui/Button";
 import { StyleSheet } from "react-native";
 import { View } from "@/components/ui/View";
-import { pickImage as libPickImage } from "@/lib/images/pick-image";
-import { useLocalSearchParams } from "expo-router";
+import { usePickImage } from "@/lib/images/pick-image";
 import { createUser } from "@/data/users";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
@@ -22,7 +21,6 @@ export default function ImagePickerExample() {
     password,
     photo,
     setFormState,
-    getFields,
   } = useSignupFormState(
     useShallow((state) => ({
       first_name: state.first_name,
@@ -32,28 +30,13 @@ export default function ImagePickerExample() {
       password: state.password,
       photo: state.photo,
       setFormState: state.setFormState,
-      getFields: state.getFields(),
     }))
   );
   const [image, setImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-    const res = await libPickImage();
-    if (res?.error) {
-      setError(res.error);
-    }
-    if (res?.result) {
-      setImage(res.result.uri);
-      setFormState({
-        photo: {
-          url: res.result.uri,
-        },
-      });
-    }
-  };
-
-  const { mutateAsync, data } = createUser({
+  const { mutateAsync: pickImage, data: imageData, isPending } = usePickImage();
+  console.log(error);
+  const { mutateAsync } = createUser({
     async onError(error) {
       console.log("erro", error.errors);
     },
@@ -65,7 +48,7 @@ export default function ImagePickerExample() {
       last_name,
       email,
       phone_number,
-      photo,
+      photo: { url: imageData?.uri! },
       password,
     });
   };

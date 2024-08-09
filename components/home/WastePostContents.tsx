@@ -1,5 +1,4 @@
-import { useLayoutEffect } from "react";
-import { type UserPost } from "@/types/user";
+import { useLayoutEffect, useMemo } from "react";
 import { useToggleHideTab } from "@/store/tab";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme } from "@rneui/themed";
@@ -9,10 +8,15 @@ import { Image } from "expo-image";
 import { Text, Avatar, Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
 import { ListItem } from "@rneui/themed";
-
-export const WastePostContent = ({ detail }: { detail: UserPost }) => {
+import { WastePost } from "@/types/maps";
+import { format } from "date-fns";
+export const WastePostContent = ({ detail }: { detail: WastePost }) => {
   const setTabHide = useToggleHideTab(useShallow((state) => state.setTabHide));
   const { theme } = useTheme();
+
+  const createdAt = useMemo(() => {
+    return format(new Date(detail.created_at), "MMM dd, yyyy");
+  }, [detail.created_at]);
 
   useLayoutEffect(() => {
     setTabHide(true);
@@ -31,7 +35,7 @@ export const WastePostContent = ({ detail }: { detail: UserPost }) => {
             alignItems: "center",
           }}
         >
-          <ImageGradientUser {...detail} />
+          <ImageGradientUser {...detail} created_at={createdAt} />
 
           <View style={[{ gap: 16 }]}>
             <ListItem
@@ -45,15 +49,17 @@ export const WastePostContent = ({ detail }: { detail: UserPost }) => {
               <Icon
                 name="location-pin"
                 size={20}
-                color={theme.colors.secondary}
+                // color={theme.colors.secondary}
               />
               <ListItem.Content>
                 <ListItem.Title>
                   <Text style={{ fontSize: 14, fontWeight: "bold" }}>
-                    Landmark
+                    Location
                   </Text>
                 </ListItem.Title>
-                <ListItem.Subtitle>Near bahay na pula</ListItem.Subtitle>
+                <ListItem.Subtitle>
+                  {detail.location.lng} {detail.location.lat}
+                </ListItem.Subtitle>
               </ListItem.Content>
             </ListItem>
             <ListItem
@@ -71,11 +77,7 @@ export const WastePostContent = ({ detail }: { detail: UserPost }) => {
                     Description
                   </Text>
                 </ListItem.Title>
-                <ListItem.Subtitle>
-                  {detail.description}
-                  {detail.description}
-                  {detail.description}
-                </ListItem.Subtitle>
+                <ListItem.Subtitle>{detail.description}</ListItem.Subtitle>
               </ListItem.Content>
             </ListItem>
             <ListItem
@@ -93,11 +95,12 @@ export const WastePostContent = ({ detail }: { detail: UserPost }) => {
                     Phone number
                   </Text>
                 </ListItem.Title>
-                <ListItem.Subtitle>0939496189</ListItem.Subtitle>
+                <ListItem.Subtitle>
+                  {detail.posted_by.phone_number}
+                </ListItem.Subtitle>
               </ListItem.Content>
             </ListItem>
             <ListItem
-
               style={{
                 alignItems: "center",
                 flexDirection: "row",
@@ -121,7 +124,7 @@ export const WastePostContent = ({ detail }: { detail: UserPost }) => {
   );
 };
 
-const ImageGradientUser = (detail: UserPost) => {
+const ImageGradientUser = (detail: WastePost) => {
   const { theme } = useTheme();
   return (
     <View
@@ -136,10 +139,10 @@ const ImageGradientUser = (detail: UserPost) => {
           width: "100%",
           objectFit: "contain",
         }}
-        placeholder={{ blurhash: "LmDmXQD*IUs-_4M{RPjsWVs:f+R*" }}
-        cachePolicy="none"
+        placeholder={{ blurhash: detail.thumbnail.hash }}
         source={{
-          uri: "https://picsum.photos/200/300?random=2" as string,
+          //@ts-ignore
+          uri: detail.thumbnail.img_file,
         }}
       />
       <LinearGradient
@@ -162,7 +165,7 @@ const ImageGradientUser = (detail: UserPost) => {
           <Avatar
             size={40}
             rounded
-            title={detail.user.firstName[0] + detail.user.lastName[0]}
+            // title={detail.user.firstName[0] + detail.user.lastName[0]}
             containerStyle={{ backgroundColor: theme.colors.error }}
           />
           <View transparent>
@@ -173,7 +176,7 @@ const ImageGradientUser = (detail: UserPost) => {
                 color: theme.colors.white,
               }}
             >
-              {detail.user.firstName} {detail.user.lastName}
+              {/* {detail.user.firstName} {detail.user.lastName} */}
             </Text>
             <Text
               style={{
@@ -182,7 +185,7 @@ const ImageGradientUser = (detail: UserPost) => {
                 color: theme.colors.white,
               }}
             >
-              August 10, 2024
+              {detail.created_at as string}
             </Text>
           </View>
         </View>

@@ -1,18 +1,27 @@
 import { StyleSheet, View } from "react-native";
-import React, { useCallback, useMemo, useState } from "react";
-import { Maps } from "@/components/Maps";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Maps, useMapContext } from "@/components/Maps";
 import { Details, LatLng, Marker, Region } from "react-native-maps";
-import { Icon, Button, useTheme } from "@rneui/themed";
+import { Icon, useTheme } from "@rneui/themed";
+import { Button } from "@/components/ui/Button";
 import { BottomModalSheet } from "@/components/ui/ModalSheet";
 import { BottomSheetView } from "@gorhom/bottom-sheet";
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { Text } from "@rneui/themed";
 import { FakeOverlayMarker } from "./FakeOverlayMarker";
+import { useLatLngStore } from "@/store/store-latlng";
+import { useShallow } from "zustand/react/shallow";
 
 type Props = {};
 
 const ChooseLocation = (props: Props) => {
   const { theme } = useTheme();
+  const router = useRouter();
+  const { setLatLangStore } = useLatLngStore(
+    useShallow((state) => ({
+      setLatLangStore: state.setLatLng,
+    }))
+  );
   const initialRegion = useMemo<Region>(
     () => ({
       latitude: 14.103991131539573,
@@ -22,32 +31,41 @@ const ChooseLocation = (props: Props) => {
     }),
     []
   );
-  const [showFakeMarker, setShowFakeMarker] = useState<boolean>(false);
-  const [geoLocation, setGeoLocation] = useState<LatLng>({
+
+  const [geoLocation, setGeolocation] = useState<LatLng>({
     latitude: initialRegion.latitude,
     longitude: initialRegion.longitude,
   });
+
+  const [showFakeMarker, setShowFakeMarker] = useState<boolean>(false);
+
+  const handleChooseLocation = useCallback(() => {
+    setLatLangStore({ ...geoLocation });
+    router.canGoBack() && router.back();
+  }, [geoLocation]);
+
+  useEffect(() => {
+    return () =>
+      setGeolocation({
+        longitude: initialRegion.longitude,
+        latitude: initialRegion.latitude,
+      });
+  }, []);
+
   const handleChangeRegion = useCallback(
     (region: Region, details: Details) => {
-      console.log(region);
-      console.log(details);
-      details.isGesture &&
-        setGeoLocation({
-          latitude: region.latitude,
-          longitude: region.longitude,
-        });
       setShowFakeMarker(false);
+      setGeolocation({
+        latitude: region.latitude,
+        longitude: region.longitude,
+      });
     },
     [showFakeMarker]
   );
   return (
     <View style={styles.container}>
       <Maps
-        overlayChildren={
-          <>
-            <FakeOverlayMarker show={showFakeMarker} />
-          </>
-        }
+        overlayChildren={<FakeOverlayMarker show={showFakeMarker} />}
         onTouchMove={() => setShowFakeMarker(true)}
         rotateEnabled={false}
         scrollDuringRotateOrZoomEnabled={false}
@@ -116,9 +134,11 @@ const ChooseLocation = (props: Props) => {
               <Text style={{ fontSize: 16 }}>{geoLocation.latitude}</Text>
             </Text>
           </View>
-          <Link href="/add-contents" asChild>
-            <Button size="lg" title="Choose This Location" />
-          </Link>
+          <Button
+            size="lg"
+            onPress={handleChooseLocation}
+            title="Choose This Location"
+          />
         </BottomSheetView>
       </BottomModalSheet>
     </View>

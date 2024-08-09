@@ -5,9 +5,12 @@ import { Stack } from "expo-router";
 const AuthLayout = () => {
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(sign-up)" />
+      <Stack>
+        <Stack.Screen
+          name="index"
+          options={{ headerTitle: "Sign in", headerTitleAlign: "center" }}
+        />
+        <Stack.Screen name="(sign-up)" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaView>
   );

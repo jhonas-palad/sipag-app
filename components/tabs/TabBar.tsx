@@ -20,7 +20,6 @@ export const TabBar = ({
         {
           backgroundColor: theme.colors.white,
           display: hide ? "none" : "flex",
-          opacity:0.5
         },
       ]}
     >

@@ -9,7 +9,6 @@ export const View = ({
   ...props
 }: ViewProps & { transparent?: boolean }) => {
   const { theme } = useTheme();
-  console.log(transparent);
   return (
     <RNVIew
       style={[

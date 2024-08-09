@@ -1,4 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { agetValueSecureStore } from "./secure-store";
+import { authTokenKey } from "@/store/auth";
+import * as FileSystem from "expo-file-system";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
 export const BASE_URL =
@@ -11,6 +13,7 @@ export async function fetchData<T extends any>(
   opts?: RequestInit
 ): Promise<SuccessResponseData<T>> {
   url = new URL(url, BASE_URL);
+
   let response = await fetch(url, { ...opts });
   let badStatus = false;
   if (!response.ok) {
@@ -38,19 +41,87 @@ export async function fetchData<T extends any>(
 export async function postData<T>(
   url: string | URL,
   body: RequestInit["body"],
+  token: string | null = "",
   contentType: string = "application/json",
   opts?: RequestInit
 ) {
-  let init = opts || {};
+  let tokenInit = token ? await initAuth(token) : {};
+  let init = { ...tokenInit, ...opts };
   init.method = "POST";
   init.body = body;
   init.headers = {
     "Content-Type": contentType,
     ...init.headers,
   };
+
   return await fetchData<T>(url, init);
 }
 
-export async function getData(url: string | URL, opts: RequestInit = {}) {
-  return await fetchData(url, opts);
+export async function getData(
+  url: string | URL,
+  token: string | null = null,
+  opts: RequestInit = {}
+) {
+  let init = { ...(await initAuth(token)), ...opts };
+  return await fetchData(url, init);
 }
+
+export const postDataWithImage = async (
+  url: string,
+  body: {
+    image: string;
+    [key: string]: any;
+  },
+  token: string | null = null,
+  opts?: RequestInit
+) => {
+  url = String(new URL(url, BASE_URL));
+  const bodyClone = { ...body };
+  const imageUri = bodyClone.image;
+  //@ts-ignore
+  delete bodyClone.image;
+  let tokenInit = token ? await initAuth(token) : {};
+  console.log(tokenInit);
+  let init = { ...tokenInit, ...opts };
+  let headers = init.headers ?? {};
+  const { status, body: responseBody } = await FileSystem.uploadAsync(
+    url,
+    imageUri,
+    {
+      fieldName: "image",
+      httpMethod:
+        (init.method as FileSystem.FileSystemAcceptedUploadHttpMethod) ??
+        "POST",
+      parameters: {
+        ...bodyClone,
+      },
+
+      headers: headers as Record<string, string>,
+      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+    }
+  );
+  if (status >= 400) {
+    throw new ResponseError(
+      `Failed to post data: ${status}`,
+      null,
+      responseBody,
+      status
+    );
+  }
+  return body;
+};
+
+export const initAuth = async (token: string | null): Promise<RequestInit> => {
+  if (!token) {
+    token = await agetValueSecureStore(authTokenKey);
+  }
+  if (!token) {
+    throw Error("No authentication token stored");
+  }
+  const initOpts = {
+    headers: {
+      Authorization: "Bearer " + token!,
+    },
+  };
+  return initOpts;
+};

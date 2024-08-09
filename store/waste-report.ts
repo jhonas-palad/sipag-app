@@ -3,27 +3,31 @@ import { findItem } from "@/utils/array";
 import { userPosts } from "@/data/users";
 import { UserPost } from "@/types/user";
 import { immer } from "zustand/middleware/immer";
-
+import { WastePost } from "@/types/maps";
 type WasteReportState = {
-  posts: UserPost[];
-  selectedPost: UserPost | null;
-  totalFeeds: number;
+  posts: WastePost[];
+  selectedPost: WastePost | null;
+  totalFeeds: number | null;
 };
 
 type WasteReportActions = {
   selectPost: (id: string | number | null) => void;
+  setPosts: (posts: WastePost[]) => void;
 };
 
 export type WasteReportStore = WasteReportState & WasteReportActions;
 
 const initialState: WasteReportState = {
-  posts: userPosts,
+  posts: [],
   selectedPost: null,
-  totalFeeds: 10,
+  totalFeeds: null,
 };
 export const useWasteReportStore = create<WasteReportStore>()(
   immer((set, get) => ({
     ...initialState,
+    setPosts(posts) {
+      set({ posts, totalFeeds: posts.length });
+    },
     selectPost: (id) => {
       if (id === null) {
         set({ selectedPost: null });

@@ -1,35 +1,79 @@
 import { Drawer } from "expo-router/drawer";
-import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
-import { Linking } from "react-native";
-import { Link, Redirect } from "expo-router";
+import {
+  DrawerContentComponentProps,
+  DrawerContentScrollView,
+  DrawerItem,
+} from "@react-navigation/drawer";
+import { View } from "@/components/ui/View";
+import { Text, Avatar, Icon } from "@rneui/themed";
+import { Redirect } from "expo-router";
 import { useAuthSession } from "@/store/auth";
 import { useShallow } from "zustand/react/shallow";
+import { useRouter } from "expo-router";
 type Props = {};
 
-function CustomDrawerContent(props: any) {
-  // console.log(JSON.stringify(props));
+function CustomDrawerContent(props: DrawerContentComponentProps) {
+  const router = useRouter();
+  const session = useAuthSession(
+    useShallow((state) => ({
+      user: state.user,
+      signOut: state.signOut,
+    }))
+  );
   return (
     <DrawerContentScrollView {...props}>
+      <View
+        transparent
+        style={{
+          paddingHorizontal: 12,
+          paddingVertical: 20,
+          gap: 12,
+        }}
+      >
+        <Avatar
+          title="JH"
+          rounded
+          containerStyle={{ backgroundColor: "red" }}
+        />
+        <View transparent>
+          <Text h4>
+            {session.user?.first_name} {session.user?.last_name}
+          </Text>
+          <Text>{session.user?.phone_number}</Text>
+          <Text>{session.user?.email}</Text>
+        </View>
+      </View>
       <DrawerItem
-        label="Website"
-        onPress={() => Linking.openURL("https://www.expo.dev/")}
+        label="Points"
+        icon={() => <Icon name="emoji-events" />}
+        onPress={() => {}}
       />
-      {/* <Link href={"/"} onPress={() => props.navigation.closeDrawer()}>
-        Alpha
-      </Link> */}
-      <Link href="/profile">Auth</Link>
+      <DrawerItem
+        label="Settings"
+        icon={() => <Icon name="settings" />}
+        onPress={() => {}}
+      />
+
+      <DrawerItem
+        label="Signout"
+        icon={() => <Icon name="logout" />}
+        onPress={() => {
+          session.signOut();
+          router.replace("/auth");
+        }}
+      />
     </DrawerContentScrollView>
   );
 }
 
 const MainLayout = (props: Props) => {
-  const { isLoading, session } = useAuthSession(
+  const session = useAuthSession(
     useShallow((state) => ({
-      isLoading: state.isLoading,
-      session: state.session,
+      isAuthenticated: state.isAuthenticated,
     }))
   );
-  if (!session) {
+  if (!session.isAuthenticated()) {
+    console.log("not authenticated");
     return <Redirect href="/auth" />;
   }
   return (

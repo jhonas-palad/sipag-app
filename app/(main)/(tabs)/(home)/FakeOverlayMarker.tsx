@@ -7,7 +7,7 @@ export const FakeOverlayMarker = memo(({ show }: { show: boolean }) => {
   const { theme } = useTheme();
   if (!show) return null;
   return (
-    <View style={styles.fakeMarker}>
+    <View transparent style={styles.fakeMarker}>
       <Icon name="location-pin" color={theme.colors.error} size={60} />
     </View>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { View, Alert, StyleSheet } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { Input } from "@/components/ui/Input";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
@@ -8,21 +8,29 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { Icon, Text, useTheme } from "@rneui/themed";
-import { useUserState } from "@/store/user";
+import * as Haptics from "expo-haptics";
 import { useShallow } from "zustand/react/shallow";
-import { SiginFormSchema, type SiginFormSchemaType } from "@/schemas/auth";
-import { Dialog } from "@rneui/themed";
+import {
+  SiginFormSchema,
+  SignupFormSchemaType,
+  type SiginFormSchemaType,
+} from "@/schemas/auth";
+import Toast from "react-native-simple-toast";
+
 import { signInUser } from "@/data/auth";
 import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
-import { ErrorDialog } from "./ErrorDialog";
+import { useAuthSession } from "@/store/auth";
 import { logger } from "@/utils/logger";
 import { ResponseError } from "@/errors/response-error";
 type Props = {};
 
 export const SigninForm = (props: Props) => {
   const { theme } = useTheme();
-  const setUserDetails = useUserState(
-    useShallow((state) => state.setUserDetails)
+  const session = useAuthSession(
+    useShallow((state) => ({
+      setToken: state.setToken,
+      setUser: state.setUser,
+    }))
   );
   const [using, setUsing] = useState<"email" | "phone_number">("phone_number");
   const router = useRouter();
@@ -38,21 +46,45 @@ export const SigninForm = (props: Props) => {
 
   const { mutateAsync, data, status } = signInUser({
     async onError(error, variables, context) {
+      let errMsg = "Sign in failed";
       if (error instanceof ResponseError) {
-        const { errors } = await error.getErrResponseData();
-        if (NON_FIELD_ERROR in errors!) {
-          form.setError(using, { message: errors?.[NON_FIELD_ERROR] });
-        }
-        if (ERR_DETAIL in errors!) {
-          form.setError("root", { message: errors?.[ERR_DETAIL] });
-        }
-        return;
+        const errors = error.errors;
+        console.log(errors);
+        Object.keys(errors!).forEach((err_field: string) => {
+          let key = err_field;
+          if (NON_FIELD_ERROR === err_field) {
+            key = using;
+          }
+          if (ERR_DETAIL === err_field) {
+            key = "root";
+          }
+          if (key === "root") {
+            errMsg = errors?.[err_field];
+          }
+          form.setError(key as "email" | "phone_number", {
+            message: errors?.[err_field],
+          });
+        });
+      } else {
+        errMsg = (error as Error)?.message as string;
+        form.setError("root", { message: errMsg });
       }
-      console.log(error);
-      form.setError("root", { message: (error as Error)?.message as string });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Toast.show(errMsg, Toast.LONG, {
+        // backgroundColor: theme.colors.error,
+        textColor: theme.colors.error,
+      });
     },
-    async onSuccess(data, variables, context) {
-      logger.info(data);
+    onSuccess(data, variables, context) {
+      const { data: responseData } = data;
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        session.setToken(responseData.token);
+        session.setUser(responseData.user);
+        router.replace("/");
+      } catch (err) {
+        console.log(err);
+      }
     },
   });
 
@@ -69,12 +101,6 @@ export const SigninForm = (props: Props) => {
 
   return (
     <Form {...form}>
-      {form.formState.errors.root?.message && (
-        <ErrorDialog
-          title="Signin Failed"
-          description={form.formState.errors.root?.message}
-        />
-      )}
       {using === "phone_number" ? (
         <FormField
           control={form.control}
@@ -159,9 +185,10 @@ export const SigninForm = (props: Props) => {
         <Button
           type="clear"
           radius="lg"
-          onPress={() =>
-            setUsing((prev) => (prev === "email" ? "phone_number" : "email"))
-          }
+          onPress={() => {
+            Haptics.selectionAsync();
+            setUsing((prev) => (prev === "email" ? "phone_number" : "email"));
+          }}
           buttonStyle={{ alignSelf: "flex-start" }}
         >
           Use {using === "email" ? "phone number" : "email"} instead?

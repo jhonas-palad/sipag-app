@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
-import { Platform } from "react-native";
-
+import { Platform, ActivityIndicator } from "react-native";
+import { View } from "./ui/View";
 import MapView, {
   LatLng,
   PROVIDER_DEFAULT,
@@ -8,7 +8,7 @@ import MapView, {
   type MapViewProps,
 } from "react-native-maps";
 import { createContext, memo, useContext } from "react";
-
+import { Overlay, Text } from "@rneui/themed";
 export interface MapProviderContextProps {
   mapRef: React.RefObject<MapView>;
   initialRegion: MapViewProps["initialRegion"];
@@ -18,8 +18,12 @@ export const Maps = memo(
   ({
     overlayChildren,
     initialRegion,
+    loading = false,
     ...props
-  }: { overlayChildren ?: React.ReactNode } & Omit<MapViewProps, "ref">) => {
+  }: { overlayChildren?: React.ReactNode; loading?: boolean } & Omit<
+    MapViewProps,
+    "ref"
+  >) => {
     const mapRef = useRef<MapView>(null);
     return (
       <MapContext.Provider value={{ mapRef, initialRegion }}>
@@ -36,6 +40,13 @@ export const Maps = memo(
           initialRegion={initialRegion}
           {...props}
         />
+        {loading && (
+          <Overlay isVisible={true}>
+            <Text>Fetching data...</Text>
+            <ActivityIndicator size="small" />
+          </Overlay>
+        )}
+
         {overlayChildren}
       </MapContext.Provider>
     );

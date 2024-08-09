@@ -1,47 +1,43 @@
 import React from "react";
 import { StyleSheet, Image } from "react-native";
-import { SignupForm } from "@/components/forms/auth/SignupForm";
+import { CredentialsForm } from "@/components/forms/auth/CredentialsForm";
 import { View } from "@/components/ui/View";
 import { Button } from "@/components/ui/Button";
 import { Text } from "@rneui/themed";
-import { KBDAvodingWrapper } from "./KBDAvodingWrapper";
+import { KBDAvodingWrapper } from "@/components/KBDAvodingWrapper";
 import { useRouter } from "expo-router";
+import AuthScreenContainer from "../AuthScreenContainer";
 type Props = {};
 
-const Signup = (props: Props) => {
+const CredentialsFormScreen = (props: Props) => {
   const router = useRouter();
   return (
-    <KBDAvodingWrapper>
-      <View style={{ marginTop: 20 }}>
+    <AuthScreenContainer
+      style={{ justifyContent: "center" }}
+      bottomChildren={
+        <View transparent>
+          <Button
+            onPress={() => {
+              router.replace("/auth");
+            }}
+            size="lg"
+            type="outline"
+            buttonStyle={{ borderWidth: 1.5 }}
+            radius="lg"
+          >
+            Sign in
+          </Button>
+        </View>
+      }
+    >
+      <View style={{ marginTop: 12 }}>
         <Text h4 style={{ marginBottom: 16 }}>
           Create your account
         </Text>
-        <SignupForm />
       </View>
-      <Button
-        onPress={() => {
-          router.dismiss();
-        }}
-        size="lg"
-        type="outline"
-        buttonStyle={{ borderWidth: 1.5 }}
-        radius="lg"
-      >
-        Go Back
-      </Button>
-    </KBDAvodingWrapper>
+      <CredentialsForm />
+    </AuthScreenContainer>
   );
 };
 
-export default Signup;
-
-const styles = StyleSheet.create({
-  headingContainer: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 36,
-  },
-  inputContainer: {
-    marginBottom: 28,
-  },
-});
+export default CredentialsFormScreen;

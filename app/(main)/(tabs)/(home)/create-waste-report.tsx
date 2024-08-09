@@ -1,20 +1,18 @@
-import {
-  StyleSheet,
-  Keyboard,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { StyleSheet } from "react-native";
 import { useToggleHideTab } from "@/store/tab";
 import React, { useLayoutEffect, useMemo } from "react";
 import { View } from "@/components/ui/View";
-import { useTheme } from "@rneui/themed";
-
+import { useTheme, FAB } from "@rneui/themed";
 import { useForm } from "react-hook-form";
-import { CreateWasteReportForm } from "./CreateWasteReportForm";
+import { Text } from "@/components/ui/Text";
+import { CreateWasteReportForm } from "@/components/forms/CreateWasteReportForm";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { GoBackFAB } from "@/components/GoBackFAB";
 type Props = {};
 
 const AddContents = (props: Props) => {
-  const snapPoints = useMemo(() => ["20%"], []);
   const { theme } = useTheme();
+  const { top } = useSafeAreaInsets();
   const form = useForm({
     defaultValues: {
       title: "",
@@ -30,14 +28,9 @@ const AddContents = (props: Props) => {
     };
   }, [setHideTab]);
   return (
-    <TouchableWithoutFeedback
-      style={styles.container}
-      onPress={Keyboard.dismiss}
-    >
-      <View style={{ paddingHorizontal: 16, flex: 1 }}>
-        <CreateWasteReportForm />
-      </View>
-    </TouchableWithoutFeedback>
+    <View style={[styles.container, { flex: 1 }]}>
+      <CreateWasteReportForm />
+    </View>
   );
 };
 const styles = StyleSheet.create({

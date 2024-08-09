@@ -23,6 +23,9 @@ export class ResponseError extends Error {
         details: "An error occured. <ResponseErrror>",
       };
     }
+    try {
+      this._body = JSON.parse(this._body);
+    } catch (err) {}
     return this._body;
   }
   toString() {

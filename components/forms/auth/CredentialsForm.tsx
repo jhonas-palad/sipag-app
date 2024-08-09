@@ -18,7 +18,7 @@ import { ResponseError } from "@/errors/response-error";
 
 type Props = {};
 
-export const SignupForm = (props: Props) => {
+export const CredentialsForm = (props: Props) => {
   const [using, setUsing] = useState<"email" | "phone_number">("phone_number");
   const { getFormState, setFormState, phone_number, email, password } =
     useSignupFormState(
@@ -186,7 +186,6 @@ export const SignupForm = (props: Props) => {
         raised
         buttonStyle={{ borderWidth: 1.5 }}
         onPress={form.handleSubmit(handleSubmit)}
-        style={{ marginBottom: 20 }}
       >
         Continue
       </Button>
@@ -196,6 +195,7 @@ export const SignupForm = (props: Props) => {
 
 const styles = StyleSheet.create({
   inputContainer: {
+    
     marginBottom: 12,
   },
 });

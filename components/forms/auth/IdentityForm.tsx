@@ -8,15 +8,11 @@ import { useForm } from "react-hook-form";
 import { SignupSchema, type SignupFormSchemaType } from "@/schemas/auth";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
-import { signUpUser } from "@/data/auth";
-import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
 import { ErrorDialog } from "./ErrorDialog";
 import * as zod from "zod";
-
-type Props = {};
 
 const IdentityFormSchema = SignupSchema.omit({
   phone_number: true,
@@ -25,7 +21,7 @@ const IdentityFormSchema = SignupSchema.omit({
   photo: true,
 });
 type IdentityFormSchemaType = zod.infer<typeof IdentityFormSchema>;
-export const IdentityForm = (props: Props) => {
+export const IdentityForm = () => {
   const router = useRouter();
   const { getFormState, setFormState, first_name, last_name } =
     useSignupFormState(

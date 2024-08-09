@@ -26,7 +26,6 @@ const HomeTabLayout = () => {
           name="create-waste-report"
           options={{
             headerShown: true,
-            // headerTransparent: true,
             headerShadowVisible: false,
             title: "Create Waste Report",
           }}

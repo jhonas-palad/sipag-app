@@ -12,10 +12,11 @@ import {
 import { UserDetailsType } from "@/schemas/users";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
+import { User } from "@/types/user";
 import * as zod from "zod";
 export const AUTH_USER = "AUTH_USER";
 
-export type AuthTokenResponse = unknown;
+export type AuthTokenResponse = SuccessResponseData<User & { token: string }>;
 
 export function signInUser(
   opts?: Omit<
@@ -30,7 +31,11 @@ export function signInUser(
   >({
     mutationKey: [AUTH_USER],
     async mutationFn(credentials: SiginFormSchemaType) {
-      return await postData("/api/v1/auth/signin", JSON.stringify(credentials));
+      return await postData(
+        "/api/v1/auth/signin",
+        JSON.stringify(credentials),
+        null
+      );
     },
     ...opts,
   });
@@ -72,4 +77,8 @@ export function validateCredentials(
     ...opts,
   });
   return resultMutation;
+}
+
+export function useSignOutUser() {
+  const resultMutation = useMutation({});
 }

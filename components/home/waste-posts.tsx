@@ -3,34 +3,25 @@ import { StyleSheet, Pressable, ViewProps, Dimensions } from "react-native";
 import { BottomView, View } from "../ui/View";
 import { useShallow } from "zustand/react/shallow";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
-import {
-  Text,
-  Icon,
-  FAB,
-  ListItem,
-  useTheme,
-  Avatar,
-  Button,
-} from "@rneui/themed";
+import { Text, ListItem, useTheme, Avatar } from "@rneui/themed";
+import { Button } from "../ui/Button";
 import BottomSheet, {
   BottomSheetFlatList,
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
 import { WastePostContent } from "./WastePostContents";
-import React, { useRef, useMemo, useCallback, useLayoutEffect } from "react";
+import React, { useRef, useMemo, useCallback, useEffect } from "react";
 import { useToggleHideTab } from "@/store/tab";
 import { useWasteReportStore } from "@/store/waste-report";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router, useRouter } from "expo-router";
-import { UserPost } from "@/types/user";
+import { Link, useRouter } from "expo-router";
 import { useMapContext } from "../Maps";
 import { Badge } from "@rneui/base";
+import { WastePost } from "@/types/maps";
+import { LinkFAB, FAB } from "../ui/FAB";
 
-type Props = {
-  selectedCleanUpPost?: UserPost | null;
-  wastePosts?: UserPost[] | null;
-};
+import { format } from "date-fns";
 
 //Currently selected marker details
 export const WastePostsBottomSheet = () => {
@@ -43,30 +34,25 @@ export const WastePostsBottomSheet = () => {
 
   const { theme } = useTheme();
 
-  const sheetStyle = useMemo(
-    () => ({
-      ...styles.sheetContainer,
-    }),
-    []
-  );
-  useLayoutEffect(() => {
-    selectedPost && bottomSheetRef.current?.snapToIndex(1);
+  useEffect(() => {
+    selectedPost && bottomSheetRef.current?.snapToIndex(0);
   }, [selectedPost]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
+        pressBehavior="collapse"
         disappearsOnIndex={1}
         appearsOnIndex={2}
-      />
+      ></BottomSheetBackdrop>
     ),
     []
   );
   return (
     <>
       <BottomSheet
-        style={sheetStyle}
+        style={[styles.sheetContainer]}
         backdropComponent={renderBackdrop}
         snapPoints={snapPoints}
         ref={bottomSheetRef}
@@ -74,26 +60,71 @@ export const WastePostsBottomSheet = () => {
           backgroundColor: theme.colors.background,
         }}
         handleStyle={{
-          backgroundColor: theme.colors.background,
+          backgroundColor: "transparent",
           borderRadius: 32,
         }}
+        handleComponent={() => (
+          <>
+            <View
+              style={{
+                position: "absolute",
+                top: -50,
+                backgroundColor: "transparent",
+                width: "100%",
+              }}
+            >
+              <View
+                transparent
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "flex-end",
+                  alignItems: "center",
+                  gap: 12,
+                  marginHorizontal: 20,
+                }}
+              >
+                <LinkFAB
+                  href={"/create-waste-report"}
+                  icon={{ name: "add" }}
+                  size="small"
+                />
+
+                <FAB icon={{ name: "sync" }} size="small" />
+              </View>
+            </View>
+            <View
+              style={{
+                paddingVertical: 12,
+                alignItems: "center",
+                borderRadius: 50,
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: theme.colors.grey3,
+                  borderRadius: 50,
+                  width: 30,
+                  height: 4,
+                }}
+              />
+            </View>
+          </>
+        )}
         handleIndicatorStyle={{
           backgroundColor: theme.colors.greyOutline,
-          height: 6,
-          width: 40,
+          height: 3.5,
+          width: 30,
         }}
       >
         {selectedPost ? (
-          <WastePostContent detail={selectedPost!} />
-        ) : (
+          <WastePostContent detail={selectedPost} />
+        ) : posts.length ? (
           <WastePostList posts={posts} />
-        )}
+        ) : null}
       </BottomSheet>
       {selectedPost && (
         <>
-          {/* Top of the screen */}
           <WasteContentFAB />
-          {/* Bottom of the screen */}
           <BottomView>
             <Button title="Accept" />
           </BottomView>
@@ -102,40 +133,12 @@ export const WastePostsBottomSheet = () => {
     </>
   );
 };
-const WastePostList = ({ posts }: { posts: UserPost[] }) => {
+const WastePostList = ({ posts }: { posts: WastePost[] }) => {
   const { theme } = useTheme();
   const router = useRouter();
-  const headerButtons = useMemo(() => {
-    return [
-      {
-        title: "Report feed",
-        children: (
-          <>
-            <Icon color={theme.colors.white} name="view-stream" size={24} />
-          </>
-        ),
-      },
-      {
-        href: "/create-waste-report",
-        title: "Create waste report",
-        children: (
-          <>
-            <Icon color={theme.colors.white} name="create" size={24} />
-          </>
-        ),
-      },
-      {
-        title: "Create report",
-        children: (
-          <>
-            <Icon color={theme.colors.white} name="create" size={24} />
-          </>
-        ),
-      },
-    ];
-  }, [theme]);
+
   const renderItemPost = useCallback(
-    ({ item }: { item: UserPost }) => <WasteItemPost {...item} />,
+    ({ item }: { item: WastePost }) => <WasteItemPost {...item} />,
     [posts, theme]
   );
 
@@ -162,53 +165,6 @@ const WastePostList = ({ posts }: { posts: UserPost[] }) => {
   );
   const renderHeaderComponent = () => (
     <View style={{ paddingTop: 12 }}>
-      <View
-        transparent
-        style={{
-          flexDirection: "row",
-          alignItems: "stretch",
-          justifyContent: "space-around",
-          marginHorizontal: 24,
-          gap: 16,
-        }}
-      >
-        {headerButtons.map(
-          (
-            {
-              children,
-              title,
-              href,
-            }: {
-              title: string;
-              children: React.ReactNode;
-              href?: string;
-            },
-            key
-          ) => (
-            <Pressable
-              onPress={() => {
-                if (!href) return;
-
-                router.push(href);
-              }}
-              style={({ pressed }) => ({
-                flex: 1,
-                flexShrink: 0,
-                backgroundColor: pressed
-                  ? theme.colors.primary
-                  : theme.colors.grey5,
-                borderRadius: 50,
-                padding: 8,
-              })}
-              key={key}
-              // title={title}
-            >
-              {/* {title} */}
-              {children}
-            </Pressable>
-          )
-        )}
-      </View>
       <Text
         h4
         style={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 4 }}
@@ -234,17 +190,23 @@ const WastePostList = ({ posts }: { posts: UserPost[] }) => {
     />
   );
 };
-export const WasteItemPost = (item: UserPost) => {
+export const WasteItemPost = (item: WastePost) => {
   const { theme } = useTheme();
   const { mapRef } = useMapContext();
   const selectPost = useWasteReportStore((state) => state.selectPost);
   const { longitude, latitude } = useMemo(
     () => ({
-      longitude: item.geo_coordinates.longitude,
-      latitude: item.geo_coordinates.latitude,
+      longitude: item.location.lng,
+      latitude: item.location.lat,
     }),
-    []
+    [item.location]
   );
+  const fullName = useMemo(() => {
+    return `${item.posted_by.first_name} ${item.posted_by.last_name}`;
+  }, [item.posted_by.first_name, item.posted_by.last_name]);
+  const createdAt = useMemo(() => {
+    return format(new Date(item.created_at), "MMM dd, yyyy");
+  }, [item.created_at]);
   const handleZoomtoMarker = () => {
     mapRef.current?.animateToRegion(
       {
@@ -283,7 +245,7 @@ export const WasteItemPost = (item: UserPost) => {
       />
       <ListItem.Content>
         <ListItem.Title style={{ fontWeight: "bold" }}>
-          {item.user.firstName} {item.user.lastName}
+          {fullName}
         </ListItem.Title>
         <ListItem.Subtitle
           style={{
@@ -292,10 +254,10 @@ export const WasteItemPost = (item: UserPost) => {
             marginBottom: 8,
           }}
         >
-          August 24, 2024 - 1hr ago
+          {createdAt}
         </ListItem.Subtitle>
         <Badge
-          value="Pending"
+          value={item.status}
           status="warning"
           badgeStyle={{
             marginTop: 4,
@@ -313,6 +275,7 @@ export const WasteItemPost = (item: UserPost) => {
     </ListItem.Swipeable>
   );
 };
+
 export const WasteContentFAB = () => {
   const { top, left } = useSafeAreaInsets();
   const { theme } = useTheme();

@@ -17,10 +17,11 @@ import React, {
 } from "react";
 import { FormDescription, FormItem } from "./Form";
 
-export const Input = forwardRef<
-  React.ElementRef<typeof TextInput>,
-  React.PropsWithoutRef<InputProps>
->(
+type TextInputP = {
+  type?: "clear";
+} & InputProps;
+
+export const Input = forwardRef<React.ElementRef<typeof TextInput>, TextInputP>(
   (
     {
       style,
@@ -30,14 +31,15 @@ export const Input = forwardRef<
       disabled,
       multiline,
       inputContainerStyle,
+      type,
       ...props
     },
-    ref
+    ref,
   ) => {
     const innerRef = useRef<TextInput>(null);
     const upperCaseLabel = useMemo(
       () => label?.toString().toUpperCase(),
-      [label]
+      [label],
     );
     const [focused, setFocused] = useState<boolean>(false);
     const { theme } = useTheme();
@@ -46,29 +48,39 @@ export const Input = forwardRef<
         onFocus?.(e);
         setFocused(true);
       },
-      [onFocus]
+      [onFocus],
     );
     const handleBlur = useCallback(
       (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
         onBlur?.(e);
         setFocused(false);
       },
-      [onBlur]
+      [onBlur],
     );
     const innerStyle = useMemo<TextInputProps["style"]>(() => {
       return {
-        borderColor: focused ? theme.colors.primary : "transparent",
+        borderColor:
+          type === "clear"
+            ? "transparent"
+            : focused
+              ? theme.colors.primary
+              : "transparent",
         borderRadius: theme.spacing.lg,
-        backgroundColor: !disabled ? theme.colors.grey5 : theme.colors.grey4,
+        backgroundColor:
+          type === "clear"
+            ? "transparent"
+            : !disabled
+              ? theme.colors.grey5
+              : theme.colors.grey4,
         borderWidth: 1.5,
         borderBottomWidth: 1.5, //We need to set this, because borderBottomWidth is implictly set by REInput
       };
-    }, [theme, focused, disabled]);
+    }, [theme, focused, disabled, type]);
     return (
       <RNEInput
         multiline={multiline}
         label={upperCaseLabel}
-        ref={mergeRefs([ref, innerRef])}
+        ref={mergeRefs([innerRef, ref])}
         onFocus={handleFocus}
         onBlur={handleBlur}
         placeholderTextColor={theme.colors.grey0}
@@ -88,22 +100,27 @@ export const Input = forwardRef<
         {...props}
       />
     );
-  }
+  },
 );
 
 export const TextArea = forwardRef<
   React.ElementRef<typeof TextInput>,
-  React.PropsWithoutRef<Omit<InputProps, "multiline">> & {
+  React.PropsWithoutRef<Omit<TextInputP, "multiline">> & {
     asFormItem: boolean;
   }
 >(({ asFormItem, maxLength = 150, onChange, ...props }, ref) => {
   const [count, setCount] = useState<number>(maxLength);
+  const [rowCount, setRowcount] = useState<number>(1);
   const handleCharsLeft = useCallback(
     (e: NativeSyntheticEvent<TextInputChangeEventData>) => {
-      setCount((prevCount) => --prevCount);
+      if (maxLength > e.nativeEvent.text.length) {
+        setCount(maxLength - e.nativeEvent.text.length);
+      } else {
+        setCount(0);
+      }
       onChange?.(e);
     },
-    [count]
+    [count],
   );
   if (asFormItem) {
     return (
