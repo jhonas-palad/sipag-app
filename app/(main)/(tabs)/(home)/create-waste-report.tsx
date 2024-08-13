@@ -5,21 +5,12 @@ import { View } from "@/components/ui/View";
 import { useTheme, FAB } from "@rneui/themed";
 import { useForm } from "react-hook-form";
 import { Text } from "@/components/ui/Text";
-import { CreateWasteReportForm } from "@/components/forms/CreateWasteReportForm";
+import { CreateWasteReportForm } from "./CreateWasteReportForm";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { GoBackFAB } from "@/components/GoBackFAB";
 type Props = {};
 
 const AddContents = (props: Props) => {
-  const { theme } = useTheme();
-  const { top } = useSafeAreaInsets();
-  const form = useForm({
-    defaultValues: {
-      title: "",
-      description: "",
-      image: "",
-    },
-  });
   const setHideTab = useToggleHideTab((state) => state.setTabHide);
   useLayoutEffect(() => {
     setHideTab(true);

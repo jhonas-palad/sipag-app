@@ -32,15 +32,16 @@ export default function ImagePickerExample() {
       setFormState: state.setFormState,
     }))
   );
-  const [image, setImage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const { mutateAsync: pickImage, data: imageData, isPending } = usePickImage();
-  console.log(error);
+
   const { mutateAsync } = createUser({
     async onError(error) {
-      console.log("erro", error.errors);
+      console.log("error", error.errors);
     },
-    onSuccess(data) {},
+    onSuccess(data) {
+      console.log("success", data);
+      router.replace("/auth");
+    },
   });
   const handleSubmit = async () => {
     mutateAsync({
@@ -58,8 +59,8 @@ export default function ImagePickerExample() {
         <Avatar
           size={300}
           onPress={pickImage}
-          source={image ? { uri: image! } : undefined}
-          title={image ? undefined : "JP"}
+          source={imageData ? { uri: imageData?.uri! } : undefined}
+          title={imageData ? undefined : "--"}
           containerStyle={{
             borderRadius: 12,
             backgroundColor: theme.colors.grey3,
@@ -82,7 +83,9 @@ export default function ImagePickerExample() {
               justifyContent: "center",
             }}
           >
-            <Text style={{ color: theme.colors.white }}>Upload Image</Text>
+            <Text style={{ color: theme.colors.white }}>
+              {imageData ? "Change" : "Upload"} Image
+            </Text>
           </View>
         </Avatar>
         <View style={{ gap: 12, alignItems: "center" }}>

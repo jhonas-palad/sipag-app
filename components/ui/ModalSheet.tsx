@@ -7,7 +7,7 @@ import { useTheme } from "@rneui/themed";
 import { forwardRef, useLayoutEffect, useRef } from "react";
 
 export const BottomModalSheet = forwardRef<
-  BottomSheetModalMethods,
+  GBottomSheetModal,
   React.PropsWithoutRef<BottomSheetModalProps> & {
     open?: boolean;
     showHandle?: boolean;

@@ -5,8 +5,8 @@ import { UserPost } from "@/types/user";
 import { immer } from "zustand/middleware/immer";
 import { WastePost } from "@/types/maps";
 type WasteReportState = {
-  posts: WastePost[];
-  selectedPost: WastePost | null;
+  posts: WastePost[] | null;
+  selectedPost: string | null;
   totalFeeds: number | null;
 };
 
@@ -18,7 +18,7 @@ type WasteReportActions = {
 export type WasteReportStore = WasteReportState & WasteReportActions;
 
 const initialState: WasteReportState = {
-  posts: [],
+  posts: null,
   selectedPost: null,
   totalFeeds: null,
 };
@@ -33,12 +33,15 @@ export const useWasteReportStore = create<WasteReportStore>()(
         set({ selectedPost: null });
         return;
       }
-      const posts = get().posts;
-      const currentFeed = findItem(posts, id);
-      if (currentFeed === null) {
-        return;
-      }
-      set({ selectedPost: currentFeed });
+      set({ selectedPost: String(id) });
+      // const posts = get().posts;
+      // if (!posts) {
+      //   return;
+      // }
+      // const currentFeed = findItem(posts, id);
+      // if (currentFeed === null) {
+      //   return;
+      // }
     },
   }))
 );

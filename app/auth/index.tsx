@@ -5,7 +5,7 @@ import { SigninForm } from "@/components/forms/auth/SigninForm";
 import React from "react";
 import { Button } from "@/components/ui/Button";
 import { Text, useTheme } from "@rneui/themed";
-import { KBDAvodingWrapper } from "../../components/KBDAvodingWrapper";
+import { postData } from "@/lib/fetch";
 import { Link } from "expo-router";
 import AuthScreenContainer from "./AuthScreenContainer";
 

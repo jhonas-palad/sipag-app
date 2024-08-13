@@ -17,31 +17,23 @@ import MapView, {
   type MapMarkerProps,
 } from "react-native-maps";
 import { WastePost } from "@/types/maps";
-import { Maps, useMapContext } from "../Maps";
+import { Maps, useMapContext } from "@/components/Maps";
 import { useWasteReportStore } from "@/store/waste-report";
 import { WastePostsBottomSheet } from "./waste-posts";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme } from "@rneui/themed";
 import { useWasteReportPosts } from "@/data/waste-reports";
+import { WastePostContent } from "./WastePostContents";
 export const WasteMapView = () => {
   const { theme } = useTheme();
-  const setPosts = useWasteReportStore(useShallow((state) => state.setPosts));
-  const { data, isFetching, isLoading, error } = useWasteReportPosts();
-
-  useEffect(() => {
-    if (!data) {
-      return;
-    }
-    const postsData = data!.data;
-    setPosts(postsData);
-  }, [data, isFetching]);
-
+  const { data, isFetching, isLoading, isError, error } = useWasteReportPosts();
+  console.log(error);
   const barangaySalaGeoPoints = useMemo<Region>(
     () => ({
-      latitude: 14.103416743102299,
-      longitude: 121.11668691609796,
-      longitudeDelta: 0.2,
-      latitudeDelta: 0.02,
+      latitude: 14.100202432834427,
+      latitudeDelta: 0.03370272545660313,
+      longitude: 121.11851876601577,
+      longitudeDelta: 0.016310177743420695,
     }),
     []
   );
@@ -52,10 +44,20 @@ export const WasteMapView = () => {
       zoomControlEnabled={false}
       toolbarEnabled={false}
       loadingEnabled
-      loading={isFetching || isLoading}
+      onRegionChangeComplete={(r) => console.log(r)}
+      // loading={isFetching || isLoading}
       loadingIndicatorColor={theme.colors.primary}
       initialRegion={barangaySalaGeoPoints}
-      overlayChildren={<WastePostsBottomSheet />}
+      overlayChildren={
+        <>
+          <WastePostsBottomSheet
+            posts={isError ? null : data?.data}
+            error={isError}
+            loading={isFetching || isLoading}
+          />
+          <WastePostContent />
+        </>
+      }
     >
       {data?.data &&
         (data.data as WastePost[]).map(

@@ -1,10 +1,10 @@
 import "react-native-reanimated";
-import { StyleSheet, Pressable, ViewProps, Dimensions } from "react-native";
-import { BottomView, View } from "../ui/View";
+import { StyleSheet, ActivityIndicator } from "react-native";
+import { BottomView, View } from "@/components/ui/View";
 import { useShallow } from "zustand/react/shallow";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 import { Text, ListItem, useTheme, Avatar } from "@rneui/themed";
-import { Button } from "../ui/Button";
+import { Button } from "@/components/ui/Button";
 import BottomSheet, {
   BottomSheetFlatList,
   BottomSheetBackdrop,
@@ -16,18 +16,35 @@ import { useToggleHideTab } from "@/store/tab";
 import { useWasteReportStore } from "@/store/waste-report";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
-import { useMapContext } from "../Maps";
+import { useMapContext } from "@/components/Maps";
 import { Badge } from "@rneui/base";
 import { WastePost } from "@/types/maps";
-import { LinkFAB, FAB } from "../ui/FAB";
+import { LinkFAB, FAB } from "@/components/ui/FAB";
 
 import { format } from "date-fns";
 
 //Currently selected marker details
-export const WastePostsBottomSheet = () => {
-  const { selectedPost, posts } = useWasteReportStore(
-    useShallow((state) => ({ ...state }))
+export const WastePostsBottomSheet = ({
+  posts,
+  error,
+  loading = false,
+}: {
+  posts: WastePost[] | never;
+  error?: boolean;
+  loading?: boolean;
+}) => {
+  const { selectedPost, setPosts } = useWasteReportStore(
+    useShallow((state) => ({
+      setPosts: state.setPosts,
+      selectedPost: state.selectedPost,
+    }))
   );
+
+  useEffect(() => {
+    if (!error && posts !== undefined) {
+      setPosts(posts);
+    }
+  }, [posts]);
 
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const snapPoints = useMemo(() => ["40%", "60%", "80%"], []);
@@ -45,7 +62,7 @@ export const WastePostsBottomSheet = () => {
         pressBehavior="collapse"
         disappearsOnIndex={1}
         appearsOnIndex={2}
-      ></BottomSheetBackdrop>
+      />
     ),
     []
   );
@@ -116,27 +133,45 @@ export const WastePostsBottomSheet = () => {
           width: 30,
         }}
       >
-        {selectedPost ? (
-          <WastePostContent detail={selectedPost} />
-        ) : posts.length ? (
+        {loading ? (
+          <BottomTextWrapper>
+            <ActivityIndicator size={"large"} />
+          </BottomTextWrapper>
+        ) : error ? (
+          <BottomTextWrapper>
+            <Text h4>Oh oh! 😔</Text>
+            <Text style={{ textAlign: "center" }}>
+              Something went wrong. We will fix it right away
+            </Text>
+          </BottomTextWrapper>
+        ) : (
           <WastePostList posts={posts} />
-        ) : null}
+        )}
       </BottomSheet>
-      {selectedPost && (
-        <>
-          <WasteContentFAB />
-          <BottomView>
-            <Button title="Accept" />
-          </BottomView>
-        </>
-      )}
+     
     </>
   );
 };
+
+const BottomTextWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <View
+      style={{
+        borderRadius: 22,
+        paddingTop: 50,
+        justifyContent: "center",
+        alignItems: "center",
+        gap: 16,
+      }}
+    >
+      {children}
+    </View>
+  );
+};
+
 const WastePostList = ({ posts }: { posts: WastePost[] }) => {
   const { theme } = useTheme();
   const router = useRouter();
-
   const renderItemPost = useCallback(
     ({ item }: { item: WastePost }) => <WasteItemPost {...item} />,
     [posts, theme]
@@ -144,22 +179,14 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
 
   const renderEmptyListComponent = useCallback(
     () => (
-      <View
-        style={{
-          borderRadius: 22,
-          paddingTop: 50,
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 16,
-        }}
-      >
+      <BottomTextWrapper>
         <Text h4>Clean and Green! 🌿</Text>
         <Text style={{ textAlign: "center" }}>
           There's no trash in your barangay at the moment. Enjoy the clean
           surroundings and refresh the screen for any updates.
         </Text>
         <Button title="Post your waste concerns" />
-      </View>
+      </BottomTextWrapper>
     ),
     [theme]
   );
@@ -273,49 +300,6 @@ export const WasteItemPost = (item: WastePost) => {
       </ListItem.Content>
       <ListItem.Chevron />
     </ListItem.Swipeable>
-  );
-};
-
-export const WasteContentFAB = () => {
-  const { top, left } = useSafeAreaInsets();
-  const { theme } = useTheme();
-  const selectPost = useWasteReportStore((state) => state.selectPost);
-  const setTabShow = useToggleHideTab(useShallow((state) => state.setTabHide));
-  const { initialRegion, mapRef } = useMapContext();
-  return (
-    <FAB
-      style={{
-        position: "absolute",
-        top: top + 20,
-        left: left + 12,
-      }}
-      size="small"
-      color={theme.colors.background}
-      icon={{ name: "arrow-back", color: theme.colors.black }}
-      onPress={() => {
-        Promise.all([
-          new Promise<void>((resolve) => {
-            setTabShow(true);
-            resolve();
-          }),
-          new Promise<void>((resolve) => {
-            selectPost(null);
-            resolve();
-          }),
-          new Promise<void>((resolve) => {
-            mapRef.current?.animateToRegion(
-              {
-                longitude: initialRegion?.longitude!,
-                latitude: initialRegion?.latitude!,
-                latitudeDelta: 1,
-                longitudeDelta: 1,
-              },
-              400
-            );
-          }),
-        ]);
-      }}
-    />
   );
 };
 

@@ -6,6 +6,10 @@ export type User = {
   is_verified?: boolean;
   phone_number?: string;
   email?: string;
+  photo?: {
+    img_file: string;
+    hash: string;
+  };
 };
 
 export type UserPost = {

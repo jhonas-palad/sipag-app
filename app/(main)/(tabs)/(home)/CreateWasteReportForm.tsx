@@ -44,7 +44,7 @@ export const CreateWasteReportForm = () => {
     defaultValues: {
       title: "",
       description: "",
-      image: "",
+      image: {},
       location: {
         longitude: longitude,
         latitude: latitude,
@@ -71,7 +71,6 @@ export const CreateWasteReportForm = () => {
 
         if (error instanceof ResponseError) {
           const errors = error.errors;
-          console.log("CreateWasterReportFOrm . errors", errors);
           Object.keys(errors!).forEach((err_field: string) => {
             let key = err_field;
             if (NON_FIELD_ERROR === err_field || ERR_DETAIL === err_field) {
@@ -84,14 +83,20 @@ export const CreateWasteReportForm = () => {
               message: errors?.[err_field],
             });
           });
+          if (error.status === 401) {
+            errMsg = "Session Expired";
+            router.replace("/auth");
+          }
+          if (error.status >= 500) {
+            errMsg = "Internal Server Error. Please try again later.";
+          }
         } else {
           errMsg = (error as Error)?.message as string;
-          form.setError("root", {
-            message: errMsg,
-          });
         }
-        console.log(error);
-        Toast.show(errMsg);
+        form.setError("root", {
+          message: errMsg,
+        });
+        Toast.show(errMsg, Toast.LONG);
       },
       async onSuccess(data) {
         router.dismissAll();
@@ -99,7 +104,11 @@ export const CreateWasteReportForm = () => {
     });
   const { mutateAsync, isPending } = usePickImage({
     onSuccess(data) {
-      form.setValue("image", data.uri);
+      form.setValue("image", {
+        url: data.uri,
+        mimeType: data.mimeType as string,
+        fileName: data.fileName as string,
+      });
     },
   });
   const handlePickImage = useCallback(async () => {
@@ -109,7 +118,6 @@ export const CreateWasteReportForm = () => {
   const handleSubmit = useCallback(
     form.handleSubmit(async (formData: WasteReportSchemaT) => {
       //@ts-ignore
-      console.log(formData);
       await postWasteReport(formData);
     }),
     [form]
@@ -169,7 +177,8 @@ export const CreateWasteReportForm = () => {
           <FormField
             name="image"
             control={form.control}
-            render={({ field }) => {
+            render={({ field, fieldState }) => {
+              console.log(fieldState.error, "asd");
               return (
                 <View
                   style={{
@@ -178,9 +187,9 @@ export const CreateWasteReportForm = () => {
                     gap: 4,
                   }}
                 >
-                  {field.value ? (
+                  {field.value.url ? (
                     <Image
-                      source={field.value}
+                      source={field.value.url}
                       style={{ width: "100%", height: 300 }}
                     />
                   ) : (
@@ -193,7 +202,9 @@ export const CreateWasteReportForm = () => {
                           Select an image
                         </Text>
                       </Button>
-                      <FormMessage />
+                      <FormMessage>
+                        {fieldState.error ? "Please upload an image" : null}
+                      </FormMessage>
                     </>
                   )}
                 </View>
@@ -248,7 +259,7 @@ export const CreateWasteReportForm = () => {
           />
         </View>
 
-        {(isPending || postPending) && (
+        {(isPending || postPending) && !form.formState.isDirty && (
           <LinearProgress variant="indeterminate" color="blue" />
         )}
         <BottomWrapper>

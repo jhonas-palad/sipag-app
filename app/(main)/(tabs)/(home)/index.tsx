@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import { View } from "@/components/ui/View";
 import { FAB } from "@rneui/themed";
 import React from "react";
-import { WasteMapView } from "@/components/home/waste-map";
+import { WasteMapView } from "@/app/(main)/(tabs)/(home)/waste-map";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 type Props = {};
@@ -10,7 +10,6 @@ type Props = {};
 const IndexPage = (props: Props) => {
   const { top, left } = useSafeAreaInsets();
   const navigation = useNavigation();
-  console.log("rerender");
   return (
     <View transparent style={[styles.container]}>
       <View

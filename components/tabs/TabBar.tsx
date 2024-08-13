@@ -12,14 +12,14 @@ export const TabBar = ({
   navigation,
 }: BottomTabBarProps) => {
   const { theme } = useTheme();
-  const hide = useToggleHideTab((state) => state.hide);
+  // const hide = useToggleHideTab((state) => state.hide);
   return (
     <View
       style={[
         styles.tabbar,
         {
           backgroundColor: theme.colors.white,
-          display: hide ? "none" : "flex",
+          // display: hide ? "none" : "flex",
         },
       ]}
     >

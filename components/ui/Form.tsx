@@ -122,9 +122,10 @@ const FormDescription = ({
   );
 };
 const FormMessage = ({ children }: PropsWithChildren) => {
-  const { error } = useFormField();
+  const { error, name } = useFormField();
+
   const body = useMemo(() => {
-    if (!error) {
+    if (!error || children) {
       return children;
     }
     if (
@@ -138,7 +139,7 @@ const FormMessage = ({ children }: PropsWithChildren) => {
       ));
     }
     return String(error?.message);
-  }, [error]);
+  }, [error, children]);
 
   if (!body) {
     return null;

@@ -6,7 +6,18 @@ export const WasteReportSchema = zod
     description: zod
       .string()
       .min(1, { message: "Please provide a description" }),
-    image: zod.string().min(1, { message: "Please upload an image" }),
+    image: zod
+      .object({
+        url: zod.string(),
+        mimeType: zod.string(),
+        fileName: zod.string(),
+      })
+      .refine(
+        ({ url, mimeType, fileName }) => {
+          return !!url && !!mimeType && !!fileName;
+        },
+        { message: "Please upload an image" }
+      ),
     location: zod.object({
       latitude: zod.number().nullable(),
       longitude: zod.number().nullable(),

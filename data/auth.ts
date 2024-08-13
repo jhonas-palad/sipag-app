@@ -13,7 +13,10 @@ import { UserDetailsType } from "@/schemas/users";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
 import { User } from "@/types/user";
+import { agetValueSecureStore } from "@/lib/secure-store";
 import * as zod from "zod";
+import { authTokenKey, useAuthSession } from "@/store/auth";
+import { useShallow } from "zustand/react/shallow";
 export const AUTH_USER = "AUTH_USER";
 
 export type AuthTokenResponse = SuccessResponseData<User & { token: string }>;
@@ -81,4 +84,29 @@ export function validateCredentials(
 
 export function useSignOutUser() {
   const resultMutation = useMutation({});
+}
+
+export function useIsValidToken() {
+  const { isAuthenticated, token } = useAuthSession(
+    useShallow((state) => ({
+      token: state.token,
+      isAuthenticated: state.isAuthenticated,
+    }))
+  );
+  const resultMutation = useQuery({
+    queryKey: [authTokenKey],
+    async queryFn() {
+      if (isAuthenticated()) {
+        return await postData(
+          "/api/v1/auth/verify",
+          JSON.stringify({
+            token: token!,
+          }),
+          null
+        );
+      }
+      throw Error("No token found");
+    },
+  });
+  return resultMutation;
 }

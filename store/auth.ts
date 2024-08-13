@@ -30,9 +30,7 @@ export const useAuthSession = create<AuthSessionState & AuthSessionAction>()(
 
       if (!token) {
         token = getValueSecureStore(authTokenKey) as string | null;
-        if (token) {
-          setToken(token);
-        }
+        setToken(token!);
       }
       if (!user) {
         let userString = getValueSecureStore(authUserIdKey)!;
@@ -41,10 +39,11 @@ export const useAuthSession = create<AuthSessionState & AuthSessionAction>()(
           setUser(user!);
         }
       }
-      console.log("id", user, " token", token);
+
       return !!user && !!token;
     },
     setToken(token) {
+      console.log("TOKEN IS SAVE")
       saveSecureStore(authTokenKey, token);
       set({ token: token });
     },

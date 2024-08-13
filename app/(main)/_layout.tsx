@@ -8,8 +8,10 @@ import { View } from "@/components/ui/View";
 import { Text, Avatar, Icon } from "@rneui/themed";
 import { Redirect } from "expo-router";
 import { useAuthSession } from "@/store/auth";
+import { useIsValidToken } from "@/data/auth";
 import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "expo-router";
+import { LoadingScreen } from "@/components/LoadingScreen";
 type Props = {};
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
@@ -67,13 +69,12 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 }
 
 const MainLayout = (props: Props) => {
-  const session = useAuthSession(
-    useShallow((state) => ({
-      isAuthenticated: state.isAuthenticated,
-    }))
-  );
-  if (!session.isAuthenticated()) {
-    console.log("not authenticated");
+  const { isError, isPending } = useIsValidToken();
+
+  if (isPending) {
+    return <LoadingScreen />;
+  }
+  if (isError) {
     return <Redirect href="/auth" />;
   }
   return (
@@ -83,6 +84,14 @@ const MainLayout = (props: Props) => {
     >
       {/* All other screens should be hidden */}
     </Drawer>
+  );
+};
+
+const DrawerItemSignOut = () => {
+  const session = useAuthSession(
+    useShallow((state) => {
+      return state.signOut;
+    })
   );
 };
 

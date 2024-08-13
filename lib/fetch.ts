@@ -3,6 +3,7 @@ import { authTokenKey } from "@/store/auth";
 import * as FileSystem from "expo-file-system";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
+import FormData from "form-data";
 export const BASE_URL =
   process.env.EXPO_PUBLIC_MODE === "development"
     ? process.env.EXPO_PUBLIC_SIPAG_API_URL
@@ -13,7 +14,6 @@ export async function fetchData<T extends any>(
   opts?: RequestInit
 ): Promise<SuccessResponseData<T>> {
   url = new URL(url, BASE_URL);
-
   let response = await fetch(url, { ...opts });
   let badStatus = false;
   if (!response.ok) {
@@ -40,7 +40,7 @@ export async function fetchData<T extends any>(
 
 export async function postData<T>(
   url: string | URL,
-  body: RequestInit["body"],
+  body: RequestInit["body"] | Record<string, string> | FormData,
   token: string | null = "",
   contentType: string = "application/json",
   opts?: RequestInit
@@ -48,12 +48,11 @@ export async function postData<T>(
   let tokenInit = token ? await initAuth(token) : {};
   let init = { ...tokenInit, ...opts };
   init.method = "POST";
-  init.body = body;
+  init.body = body as RequestInit["body"];
   init.headers = {
     "Content-Type": contentType,
     ...init.headers,
   };
-
   return await fetchData<T>(url, init);
 }
 
@@ -81,7 +80,6 @@ export const postDataWithImage = async (
   //@ts-ignore
   delete bodyClone.image;
   let tokenInit = token ? await initAuth(token) : {};
-  console.log(tokenInit);
   let init = { ...tokenInit, ...opts };
   let headers = init.headers ?? {};
   const { status, body: responseBody } = await FileSystem.uploadAsync(
@@ -101,6 +99,7 @@ export const postDataWithImage = async (
     }
   );
   if (status >= 400) {
+    console.log("status", status);
     throw new ResponseError(
       `Failed to post data: ${status}`,
       null,
