@@ -1,16 +1,13 @@
 import { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
-import React, {
-  useState,
-  useLayoutEffect,
-  useRef,
-  useMemo,
-  useEffect,
-} from "react";
+import React, { useMemo } from "react";
 import * as Location from "expo-location";
-import { Text, Platform } from "react-native";
+import { Image } from "react-native";
+import { View } from "@/components/ui/View";
+import { Text } from "@/components/ui/Text";
 
 import MapView, {
   LatLng,
+  Callout,
   Region,
   Marker,
   type MarkerPressEvent,
@@ -20,10 +17,11 @@ import { WastePost } from "@/types/maps";
 import { Maps, useMapContext } from "@/components/Maps";
 import { useWasteReportStore } from "@/store/waste-report";
 import { WastePostsBottomSheet } from "./waste-posts";
-import { useShallow } from "zustand/react/shallow";
-import { useTheme } from "@rneui/themed";
+import { regionCoordinates } from "@/lib/maps/gotoRegion";
+import { useTheme, Icon } from "@rneui/themed";
 import { useWasteReportPosts } from "@/data/waste-reports";
 import { WastePostContent } from "./WastePostContents";
+import { GarbageSVG } from "@/components/svg/garbage";
 export const WasteMapView = () => {
   const { theme } = useTheme();
   const { data, isFetching, isLoading, isError, error } = useWasteReportPosts();
@@ -75,11 +73,7 @@ export const WasteMapView = () => {
             key
           ) => (
             <WasteMapMarker
-              created_at={created_at}
-              posted_by={posted_by}
-              status={status}
               title={title}
-              thumbnail={thumbnail}
               description={description}
               key={key}
               id={id}
@@ -91,7 +85,7 @@ export const WasteMapView = () => {
   );
 };
 
-type CommunityMapMarkerProps = WastePost &
+type CommunityMapMarkerProps = Pick<WastePost, "id" | "location" | "title"> &
   Omit<MapMarkerProps, "coordinate" | "id">;
 
 export const WasteMapMarker = ({
@@ -99,34 +93,65 @@ export const WasteMapMarker = ({
   location,
   ...props
 }: CommunityMapMarkerProps) => {
+  const { theme } = useTheme();
+  const coordinates = useMemo(() => {
+    return regionCoordinates({
+      latitude: location.lat,
+      longitude: location.lng,
+    });
+  }, [location]);
   const { mapRef } = useMapContext();
   const selectPost = useWasteReportStore((state) => state.selectPost);
   const handleOnpress = (e: MarkerPressEvent) => {
     e.preventDefault();
-    Promise.all([
-      new Promise<void>((resolve, reject) => {
-        mapRef.current?.animateToRegion(
-          {
-            longitude: location.lng + 0.0003,
-            latitude: location.lat - 0.0031,
-            latitudeDelta: 0.02,
-            longitudeDelta: 0.0004,
-          },
-          400
-        );
-        resolve();
-      }),
-      new Promise<void>((resolve, reject) => {
-        selectPost(id);
-        resolve();
-      }),
-    ]);
+    selectPost(id);
+    // mapRef.current?.animateToRegion(
+    //   {
+    //     ...coordinates,
+    //   },
+    //   400
+    // );
+
+    mapRef.current?.animateCamera({
+      center: {
+        longitude: location.lng + 0.0003,
+        latitude: location.lat - 0.0031,
+      },
+      zoom: 1,
+      pitch: 12,
+    });
+    // Promise.all([
+    //   new Promise<void>((resolve, reject) => {
+    //     resolve();
+    //   }),
+    //   new Promise<void>((resolve, reject) => {
+    //     resolve();
+    //   }),
+    // ]);
   };
   return (
     <Marker
-      onPress={handleOnpress}
       {...props}
+      onPress={handleOnpress}
+      tracksViewChanges={false}
       coordinate={{ latitude: location.lat, longitude: location.lng }}
-    />
+    >
+      <View
+        style={{
+          backgroundColor: theme.colors.white,
+          position: "absolute",
+          zIndex: 10,
+          // width: "100%",
+          borderRadius: 60,
+          left: "23%",
+          top: "12%",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <GarbageSVG />
+      </View>
+      <Icon name="location-pin" color={theme.colors.divider} size={60} />
+    </Marker>
   );
 };

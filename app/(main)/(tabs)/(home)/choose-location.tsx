@@ -74,6 +74,7 @@ const ChooseLocation = (props: Props) => {
       >
         {!showFakeMarker && (
           <Marker
+            tracksViewChanges={false}
             zIndex={1}
             coordinate={{
               ...geoLocation,
@@ -84,6 +85,7 @@ const ChooseLocation = (props: Props) => {
         )}
         <Marker
           zIndex={0}
+          tracksViewChanges={false}
           coordinate={{
             ...geoLocation,
           }}
