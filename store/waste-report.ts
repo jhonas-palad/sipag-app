@@ -45,3 +45,23 @@ export const useWasteReportStore = create<WasteReportStore>()(
     },
   }))
 );
+
+type WasteContainerState = {
+  showBtmModal?: boolean;
+  showBtmSheet?: boolean;
+};
+type WasteContainerActions = {
+  setContainerState: (args: WasteContainerState) => void;
+};
+
+export const useWasteContainerState = create<
+  WasteContainerState & WasteContainerActions
+>()(
+  immer((set, get) => ({
+    showBtmModal: false,
+    showBtmSheet: false,
+    setContainerState(args) {
+      set({ ...args });
+    },
+  }))
+);

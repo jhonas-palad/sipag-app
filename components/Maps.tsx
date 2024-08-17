@@ -35,7 +35,7 @@ export const Maps = memo(
           }
           style={{
             width: "100%",
-            height: "100%",
+            height: "70%",
           }}
           initialRegion={initialRegion}
           {...props}

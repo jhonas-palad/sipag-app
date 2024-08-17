@@ -29,6 +29,27 @@ export const useWasteReportPosts = (id: string | false | null = null) => {
   });
 };
 
+export const useDeleteWastReport = (
+  opts?: UseMutationOptions<SuccessResponseData<unknown>, ResponseError, string>
+) => {
+  const token = useAuthSession(useShallow((state) => state.token));
+  const queryClient = useQueryClient();
+
+  return useMutation<SuccessResponseData<unknown>, ResponseError, string>({
+    async mutationFn(id) {
+      const url = `${ENDPOINT}${id}`;
+      return await postData(url, {}, token, "application/json", {
+        method: "DELETE",
+      });
+    },
+    ...opts,
+    async onSuccess(data, variables, context) {
+      await queryClient.invalidateQueries({ queryKey: [WASTE_REPORTS] });
+      opts?.onSuccess?.(data, variables, context);
+    },
+  });
+};
+
 export const useCreateReportPost = (
   opts?: UseMutationOptions<unknown, ResponseError, WasteReportSchemaT>
 ) => {

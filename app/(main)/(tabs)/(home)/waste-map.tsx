@@ -1,5 +1,5 @@
 import { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import * as Location from "expo-location";
 import { Image } from "react-native";
 import { View } from "@/components/ui/View";
@@ -15,17 +15,23 @@ import MapView, {
 } from "react-native-maps";
 import { WastePost } from "@/types/maps";
 import { Maps, useMapContext } from "@/components/Maps";
-import { useWasteReportStore } from "@/store/waste-report";
+import {
+  useWasteReportStore,
+  useWasteContainerState,
+} from "@/store/waste-report";
 import { WastePostsBottomSheet } from "./waste-posts";
 import { regionCoordinates } from "@/lib/maps/gotoRegion";
 import { useTheme, Icon } from "@rneui/themed";
 import { useWasteReportPosts } from "@/data/waste-reports";
 import { WastePostContent } from "./WastePostContents";
 import { GarbageSVG } from "@/components/svg/garbage";
+import { useShallow } from "zustand/react/shallow";
 export const WasteMapView = () => {
   const { theme } = useTheme();
   const { data, isFetching, isLoading, isError, error } = useWasteReportPosts();
-  console.log(error);
+  const selectedPost = useWasteReportStore(
+    useShallow((state) => state.selectedPost)
+  );
   const barangaySalaGeoPoints = useMemo<Region>(
     () => ({
       latitude: 14.100202432834427,
@@ -53,7 +59,7 @@ export const WasteMapView = () => {
             error={isError}
             loading={isFetching || isLoading}
           />
-          <WastePostContent />
+          {selectedPost && <WastePostContent id={selectedPost} />}
         </>
       }
     >
@@ -101,10 +107,14 @@ export const WasteMapMarker = ({
     });
   }, [location]);
   const { mapRef } = useMapContext();
+  const setContainerState = useWasteContainerState(
+    useShallow((state) => state.setContainerState)
+  );
   const selectPost = useWasteReportStore((state) => state.selectPost);
   const handleOnpress = (e: MarkerPressEvent) => {
     e.preventDefault();
     selectPost(id);
+    setContainerState({ showBtmModal: true });
     // mapRef.current?.animateToRegion(
     //   {
     //     ...coordinates,
@@ -114,20 +124,11 @@ export const WasteMapMarker = ({
 
     mapRef.current?.animateCamera({
       center: {
-        longitude: location.lng + 0.0003,
-        latitude: location.lat - 0.0031,
+        longitude: location.lng,
+        latitude: location.lat,
       },
-      zoom: 1,
       pitch: 12,
     });
-    // Promise.all([
-    //   new Promise<void>((resolve, reject) => {
-    //     resolve();
-    //   }),
-    //   new Promise<void>((resolve, reject) => {
-    //     resolve();
-    //   }),
-    // ]);
   };
   return (
     <Marker

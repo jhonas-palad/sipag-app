@@ -1,4 +1,10 @@
-import { useEffect, useLayoutEffect, useMemo, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useTransition,
+} from "react";
 import { useToggleHideTab } from "@/store/tab";
 import { useShallow } from "zustand/react/shallow";
 import { useTheme } from "@rneui/themed";
@@ -10,27 +16,43 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ListItem } from "@rneui/themed";
 import { WastePost } from "@/types/maps";
 import { format } from "date-fns";
-import { useWasteReportPosts } from "@/data/waste-reports";
+import { useDeleteWastReport, useWasteReportPosts } from "@/data/waste-reports";
 import { BottomView } from "@/components/ui/View";
 import { BottomModalSheet } from "@/components/ui/ModalSheet";
 import { useRef } from "react";
-import { useWasteReportStore } from "@/store/waste-report";
+import {
+  useWasteContainerState,
+  useWasteReportStore,
+} from "@/store/waste-report";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMapContext } from "@/components/Maps";
 import { FAB } from "@/components/ui/FAB";
 import { Button } from "@/components/ui/Button";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuthSession } from "@/store/auth";
-export const WastePostContent = () => {
+import Toast from "react-native-simple-toast";
+import { ResponseError } from "@/errors/response-error";
+
+export const WastePostContent = ({ id }: { id: string }) => {
+  if (!id) {
+    return null;
+  }
   const { theme } = useTheme();
   const modalRef = useRef<BottomSheetModal>(null);
-  const selectedPost = useWasteReportStore(
-    useShallow((state) => state.selectedPost)
+  const { showBtmModal } = useWasteContainerState(
+    useShallow((state) => ({
+      showBtmModal: state.showBtmModal,
+    }))
   );
+  // const selectedPost = useWasteReportStore(
+  //   useShallow((state) => state.selectedPost)
+  // );
+
   const user = useAuthSession(useShallow((state) => state.user));
-  const wasteQuery = useWasteReportPosts(selectedPost ?? false);
+  const { data, isFetching, isLoading, isError } = useWasteReportPosts(id);
+
   const detail: WastePost | null = useMemo(() => {
-    const postData: WastePost = wasteQuery?.data?.data;
+    const postData: WastePost = data?.data;
     if (!postData) {
       return null;
     }
@@ -47,17 +69,19 @@ export const WastePostContent = () => {
       thumbnail: postData.thumbnail,
       title: postData.title,
     };
-  }, [wasteQuery?.data]);
+  }, [data]);
+
   const myPost = useMemo(() => {
     return user?.id === detail?.posted_by.id;
   }, [user, detail]);
-  if (wasteQuery === null || selectedPost === null) {
+
+  if (data === null || !showBtmModal) {
     return null;
   }
-  console.log("myPost", myPost);
+
   return (
     <>
-      {selectedPost && <WasteContentFAB />}
+      {showBtmModal && <WasteContentFAB />}
 
       <BottomModalSheet
         enablePanDownToClose={false}
@@ -65,7 +89,7 @@ export const WastePostContent = () => {
         open
         snapPoints={["60%"]}
       >
-        {wasteQuery?.isFetching && !detail ? (
+        {(isFetching || isLoading) && !detail ? (
           <LoadingScreen />
         ) : (
           <>
@@ -188,15 +212,7 @@ export const WastePostContent = () => {
                     </>
                   )
                 ) : (
-                  <Button
-                    containerStyle={{ flex: 1 }}
-                    color="error"
-                    raised
-                    buttonStyle={{ borderColor: "transparent" }}
-                  >
-                    DELETE POST
-                  </Button>
-                  // <Text>Accepted by: {detail?.posted_by.first_name}</Text>
+                  <DeleteButton postId={String(detail?.id)} />
                 )}
               </View>
             </BottomView>
@@ -204,6 +220,47 @@ export const WastePostContent = () => {
         )}
       </BottomModalSheet>
     </>
+  );
+};
+
+const DeleteButton = ({ postId }: { postId: string }) => {
+  const selectPost = useWasteReportStore(
+    useShallow((state) => state.selectPost)
+  );
+  const setContainerState = useWasteContainerState(
+    useShallow((state) => state.setContainerState)
+  );
+  const mutation = useDeleteWastReport({
+    async onError(error, variables, context) {
+      let errMsg = "An error occurred";
+
+      if (error instanceof ResponseError) {
+        const errors = error.errors;
+        // console.log(errors.statu);
+      }
+      console.log(error.status);
+      Toast.show(`${errMsg}: ${error.status ?? "None"}`, Toast.LONG);
+    },
+    async onSuccess() {
+      selectPost(null);
+      setContainerState({ showBtmModal: false });
+    },
+  });
+  const handleDelete = useCallback(() => {
+    mutation.mutate(postId);
+  }, [postId]);
+  return (
+    <Button
+      containerStyle={{ flex: 1 }}
+      color="error"
+      onPress={handleDelete}
+      raised
+      loading={mutation.isPending}
+      buttonStyle={{ borderColor: "transparent" }}
+      disabled={mutation.isPending}
+    >
+      DELETE POST
+    </Button>
   );
 };
 

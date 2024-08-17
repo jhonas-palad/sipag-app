@@ -13,7 +13,10 @@ import BottomSheet, {
 import { WastePostContent } from "./WastePostContents";
 import React, { useRef, useMemo, useCallback, useEffect } from "react";
 import { useToggleHideTab } from "@/store/tab";
-import { useWasteReportStore } from "@/store/waste-report";
+import {
+  useWasteContainerState,
+  useWasteReportStore,
+} from "@/store/waste-report";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Link, useRouter } from "expo-router";
 import { useMapContext } from "@/components/Maps";
@@ -148,7 +151,6 @@ export const WastePostsBottomSheet = ({
           <WastePostList posts={posts} />
         )}
       </BottomSheet>
-     
     </>
   );
 };
@@ -176,7 +178,6 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
     ({ item }: { item: WastePost }) => <WasteItemPost {...item} />,
     [posts, theme]
   );
-
   const renderEmptyListComponent = useCallback(
     () => (
       <BottomTextWrapper>
@@ -192,10 +193,7 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
   );
   const renderHeaderComponent = () => (
     <View style={{ paddingTop: 12 }}>
-      <Text
-        h4
-        style={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 4 }}
-      >
+      <Text h4 style={{ paddingHorizontal: 24, paddingVertical: 4 }}>
         Community Waste Reports
       </Text>
     </View>
@@ -220,6 +218,12 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
 export const WasteItemPost = (item: WastePost) => {
   const { theme } = useTheme();
   const { mapRef } = useMapContext();
+  const { setContainerState, showBtmModal } = useWasteContainerState(
+    useShallow((state) => ({
+      showBtmModal: state.showBtmModal,
+      setContainerState: state.setContainerState,
+    }))
+  );
   const selectPost = useWasteReportStore((state) => state.selectPost);
   const { longitude, latitude } = useMemo(
     () => ({
@@ -228,6 +232,21 @@ export const WasteItemPost = (item: WastePost) => {
     }),
     [item.location]
   );
+  const itemStatus = useCallback(
+    (
+      status: "AVAILABLE" | "INPROGRESS" | "DONE"
+    ): "primary" | "warning" | "success" => {
+      switch (status) {
+        case "AVAILABLE":
+          return "primary";
+        case "INPROGRESS":
+          return "warning";
+        case "DONE":
+          return "success";
+      }
+    },
+    [item]
+  );
   const fullName = useMemo(() => {
     return `${item.posted_by.first_name} ${item.posted_by.last_name}`;
   }, [item.posted_by.first_name, item.posted_by.last_name]);
@@ -235,16 +254,15 @@ export const WasteItemPost = (item: WastePost) => {
     return format(new Date(item.created_at), "MMM dd, yyyy");
   }, [item.created_at]);
   const handleZoomtoMarker = () => {
-    mapRef.current?.animateToRegion(
-      {
+    mapRef.current?.animateCamera({
+      center: {
         latitude,
         longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.0004,
       },
-      400
-    );
+      pitch: 12,
+    });
     selectPost(item.id);
+    setContainerState({ showBtmModal: true });
   };
   return (
     <ListItem.Swipeable
@@ -274,25 +292,31 @@ export const WasteItemPost = (item: WastePost) => {
         <ListItem.Title style={{ fontWeight: "bold" }}>
           {fullName}
         </ListItem.Title>
-        <ListItem.Subtitle
+        <View
           style={{
-            fontWeight: "300",
-            color: theme.colors.greyOutline,
+            // color: theme.colors.greyOutline,
             marginBottom: 8,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            // backgroundColor: "red",
           }}
         >
-          {createdAt}
-        </ListItem.Subtitle>
-        <Badge
-          value={item.status}
-          status="warning"
-          badgeStyle={{
-            marginTop: 4,
-            borderRadius: 50,
-            padding: 4,
-            height: "auto",
-          }}
-        />
+          <Text>{createdAt}</Text>
+          <Badge
+            value={item.status}
+            status={itemStatus(
+              item.status as "AVAILABLE" | "INPROGRESS" | "DONE"
+            )}
+            badgeStyle={{
+              marginTop: 4,
+              borderRadius: 50,
+              padding: 4,
+              height: "auto",
+            }}
+          />
+        </View>
 
         <Text numberOfLines={2} style={{ marginTop: 4 }}>
           {item.description}

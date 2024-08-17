@@ -47,7 +47,7 @@ export async function postData<T>(
 ) {
   let tokenInit = token ? await initAuth(token) : {};
   let init = { ...tokenInit, ...opts };
-  init.method = "POST";
+  init.method = init.method ?? "POST";
   init.body = body as RequestInit["body"];
   init.headers = {
     "Content-Type": contentType,

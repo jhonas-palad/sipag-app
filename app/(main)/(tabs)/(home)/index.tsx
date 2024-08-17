@@ -1,15 +1,20 @@
 import { StyleSheet } from "react-native";
 import { View } from "@/components/ui/View";
-import { FAB } from "@rneui/themed";
+import { FAB, Avatar } from "@rneui/themed";
 import React from "react";
 import { WasteMapView } from "@/app/(main)/(tabs)/(home)/waste-map";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuthSession } from "@/store/auth";
+import { useShallow } from "zustand/react/shallow";
+import { Image } from "expo-image";
+
 type Props = {};
 
 const IndexPage = (props: Props) => {
   const { top, left } = useSafeAreaInsets();
   const navigation = useNavigation();
+  const user = useAuthSession(useShallow((state) => state.user));
   return (
     <View transparent style={[styles.container]}>
       <View
@@ -24,13 +29,19 @@ const IndexPage = (props: Props) => {
           zIndex: 1,
         }}
       >
-        <FAB
+        <Avatar
+          size={50}
           onPress={() => {
             navigation.dispatch(DrawerActions.openDrawer());
           }}
-          size="small"
-          icon={{ name: "add" }}
-        />
+          rounded
+        >
+          <Image
+            contentFit="cover"
+            style={{ width: "100%", height: "100%", borderRadius: 50 }}
+            source={{ uri: user?.photo?.img_file }}
+          />
+        </Avatar>
       </View>
       <WasteMapView />
     </View>
