@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { findItem } from "@/utils/array";
-import { userPosts } from "@/data/users";
 import { UserPost } from "@/types/user";
 import { immer } from "zustand/middleware/immer";
 import { WastePost } from "@/types/maps";

@@ -8,6 +8,7 @@ export type SignupFormActions = {
   setFormState: (data: SignupSchemaAllOptionalType) => void;
   getFormState: () => SignupSchemaAllOptionalType;
   getFields: () => SignupSchemaAllOptionalType;
+  reset: () => void;
 };
 
 const initialDetails: SignupSchemaAllOptionalType = {
@@ -22,6 +23,9 @@ const initialDetails: SignupSchemaAllOptionalType = {
 export const useSignupFormState = create<SignupFormState & SignupFormActions>()(
   immer((set, get) => ({
     ...initialDetails,
+    reset() {
+      set({ ...initialDetails });
+    },
     setFormState(data: SignupFormState) {
       set({ ...data });
     },

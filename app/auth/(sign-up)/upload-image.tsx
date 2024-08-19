@@ -10,6 +10,8 @@ import { useShallow } from "zustand/react/shallow";
 import { Avatar } from "@rneui/themed";
 import { useTheme } from "@rneui/themed";
 import { useRouter } from "expo-router";
+import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
+import UploadPhotoForm from "@/components/forms/auth/UploadPhotoForm";
 export default function ImagePickerExample() {
   const router = useRouter();
   const { theme } = useTheme();
@@ -32,114 +34,11 @@ export default function ImagePickerExample() {
       setFormState: state.setFormState,
     }))
   );
-  const { mutateAsync: pickImage, data: imageData, isPending } = usePickImage();
 
-  const { mutateAsync } = createUser({
-    async onError(error) {
-      console.log("error", error.errors);
-    },
-    onSuccess(data) {
-      console.log("success", data);
-      router.replace("/auth");
-    },
-  });
-  const handleSubmit = async () => {
-    mutateAsync({
-      first_name,
-      last_name,
-      email,
-      phone_number,
-      photo: { url: imageData?.uri! },
-      password,
-    });
-  };
   return (
     <View style={styles.container}>
-      <View transparent style={{ alignItems: "center" }}>
-        <Avatar
-          size={300}
-          onPress={pickImage}
-          source={imageData ? { uri: imageData?.uri! } : undefined}
-          title={imageData ? undefined : "--"}
-          containerStyle={{
-            borderRadius: 12,
-            backgroundColor: theme.colors.grey3,
-            overflow: "hidden",
-            position: "relative",
-            marginBottom: 16,
-          }}
-          // style={styles.image}
-        >
-          <View
-            style={{
-              width: "100%",
-              height: 35,
-              bottom: 0,
-              paddingBottom: 8,
-              backgroundColor: theme.colors.grey0,
-              opacity: 0.5,
-              position: "absolute",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Text style={{ color: theme.colors.white }}>
-              {imageData ? "Change" : "Upload"} Image
-            </Text>
-          </View>
-        </Avatar>
-        <View style={{ gap: 12, alignItems: "center" }}>
-          <Text h3 style={{ color: theme.colors.black }}>
-            {first_name} {last_name}
-          </Text>
-          {email && (
-            <View
-              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
-            >
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.grey2,
-                }}
-              >
-                Email
-              </Text>
-              <Text style={{ fontSize: 20, color: theme.colors.grey0 }}>
-                {email}
-              </Text>
-            </View>
-          )}
-          {phone_number && (
-            <View
-              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
-            >
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.grey2,
-                }}
-              >
-                Mobile
-              </Text>
-              <Text style={{ fontSize: 20, color: theme.colors.grey0 }}>
-                {phone_number}
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* {error && <Text>{error}</Text>} */}
+      <UploadPhotoForm />
       <View style={{ gap: 12 }}>
-        <Button
-          radius="lg"
-          size="lg"
-          title="Submit"
-          raised
-          buttonStyle={{ borderWidth: 1.5 }}
-          onPress={handleSubmit}
-        />
-
         <Button
           onPress={() => {
             router.dismiss();

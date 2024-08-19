@@ -247,6 +247,8 @@ export const WasteItemPost = (item: WastePost) => {
     },
     [item]
   );
+
+  console.log(item.posted_by);
   const fullName = useMemo(() => {
     return `${item.posted_by.first_name} ${item.posted_by.last_name}`;
   }, [item.posted_by.first_name, item.posted_by.last_name]);

@@ -65,6 +65,7 @@ const ChooseLocation = (props: Props) => {
   return (
     <View style={styles.container}>
       <Maps
+        style={{ height: "100%" }}
         overlayChildren={<FakeOverlayMarker show={showFakeMarker} />}
         onTouchMove={() => setShowFakeMarker(true)}
         rotateEnabled={false}

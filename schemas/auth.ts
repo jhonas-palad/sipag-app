@@ -35,7 +35,13 @@ export const SignupSchema = zod.object({
   password: zod
     .string()
     .min(8, { message: "Password must contain at least 8 characters" }),
-  photo: ImageSchema.pick({ url: true }).nullable(),
+  photo: zod
+    .object({
+      url: zod.string(),
+      mimeType: zod.string(),
+      fileName: zod.string(),
+    })
+    .nullable(),
 });
 
 const SignupSchemaOptional = SignupSchema.partial({

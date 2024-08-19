@@ -178,7 +178,6 @@ export const CreateWasteReportForm = () => {
             name="image"
             control={form.control}
             render={({ field, fieldState }) => {
-              console.log(fieldState.error, "asd");
               return (
                 <View
                   style={{

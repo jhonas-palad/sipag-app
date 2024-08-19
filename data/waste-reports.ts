@@ -26,6 +26,7 @@ export const useWasteReportPosts = (id: string | false | null = null) => {
       }
       return await getData(url, token);
     },
+    
   });
 };
 

@@ -59,40 +59,20 @@ export const WasteMapView = () => {
             error={isError}
             loading={isFetching || isLoading}
           />
-          {selectedPost && <WastePostContent id={selectedPost} />}
+          <WastePostContent />
         </>
       }
     >
       {data?.data &&
-        (data.data as WastePost[]).map(
-          (
-            {
-              id,
-              title,
-              thumbnail,
-              location,
-              description,
-              status,
-              posted_by,
-              created_at,
-            },
-            key
-          ) => (
-            <WasteMapMarker
-              title={title}
-              description={description}
-              key={key}
-              id={id}
-              location={location}
-            />
-          )
-        )}
+        (data.data as WastePost[]).map(({ id, location }, key) => (
+          <WasteMapMarker key={key} id={id} location={location} />
+        ))}
     </Maps>
   );
 };
 
-type CommunityMapMarkerProps = Pick<WastePost, "id" | "location" | "title"> &
-  Omit<MapMarkerProps, "coordinate" | "id">;
+type CommunityMapMarkerProps = Pick<WastePost, "id" | "location"> &
+  Omit<MapMarkerProps, "coordinate" | "id" | "title" | "description">;
 
 export const WasteMapMarker = ({
   id,
@@ -115,12 +95,6 @@ export const WasteMapMarker = ({
     e.preventDefault();
     selectPost(id);
     setContainerState({ showBtmModal: true });
-    // mapRef.current?.animateToRegion(
-    //   {
-    //     ...coordinates,
-    //   },
-    //   400
-    // );
 
     mapRef.current?.animateCamera({
       center: {

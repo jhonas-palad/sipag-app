@@ -3,6 +3,7 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  useState,
   useTransition,
 } from "react";
 import { useToggleHideTab } from "@/store/tab";
@@ -15,7 +16,7 @@ import { Text, Avatar, Icon } from "@rneui/themed";
 import { LinearGradient } from "expo-linear-gradient";
 import { ListItem } from "@rneui/themed";
 import { WastePost } from "@/types/maps";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import { useDeleteWastReport, useWasteReportPosts } from "@/data/waste-reports";
 import { BottomView } from "@/components/ui/View";
 import { BottomModalSheet } from "@/components/ui/ModalSheet";
@@ -32,11 +33,9 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuthSession } from "@/store/auth";
 import Toast from "react-native-simple-toast";
 import { ResponseError } from "@/errors/response-error";
+import { boolean } from "zod";
 
-export const WastePostContent = ({ id }: { id: string }) => {
-  if (!id) {
-    return null;
-  }
+export const WastePostContent = () => {
   const { theme } = useTheme();
   const modalRef = useRef<BottomSheetModal>(null);
   const { showBtmModal } = useWasteContainerState(
@@ -44,12 +43,14 @@ export const WastePostContent = ({ id }: { id: string }) => {
       showBtmModal: state.showBtmModal,
     }))
   );
-  // const selectedPost = useWasteReportStore(
-  //   useShallow((state) => state.selectedPost)
-  // );
+  const selectedPost = useWasteReportStore(
+    useShallow((state) => state.selectedPost)
+  );
 
   const user = useAuthSession(useShallow((state) => state.user));
-  const { data, isFetching, isLoading, isError } = useWasteReportPosts(id);
+  const { data, isFetching, isLoading, isError } = useWasteReportPosts(
+    selectedPost ?? false
+  );
 
   const detail: WastePost | null = useMemo(() => {
     const postData: WastePost = data?.data;
@@ -72,6 +73,7 @@ export const WastePostContent = ({ id }: { id: string }) => {
   }, [data]);
 
   const myPost = useMemo(() => {
+    if (!detail || !user) return null;
     return user?.id === detail?.posted_by.id;
   }, [user, detail]);
 
@@ -86,8 +88,8 @@ export const WastePostContent = ({ id }: { id: string }) => {
       <BottomModalSheet
         enablePanDownToClose={false}
         ref={modalRef}
-        open
-        snapPoints={["60%"]}
+        open={showBtmModal}
+        snapPoints={["60%", "80%"]}
       >
         {(isFetching || isLoading) && !detail ? (
           <LoadingScreen />
@@ -198,21 +200,26 @@ export const WastePostContent = ({ id }: { id: string }) => {
               </View>
             </BottomSheetScrollView>
             <BottomView>
-              <Text>{detail?.status}</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  paddingHorizontal: 4,
+                }}
+              >
+                <Text>Status</Text>
+                <Text style={{ marginBottom: 4, fontWeight: "700" }}>
+                  {detail?.status}
+                </Text>
+              </View>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 {!myPost ? (
-                  detail?.status === "AVAILABLE" ? (
-                    <Button containerStyle={{ flex: 1 }}>ACCEPT TASK</Button>
-                  ) : (
-                    <>
-                      <Button containerStyle={{ flex: 1 }}>Finish</Button>
-                      <Button type="outline" containerStyle={{ flex: 1 }}>
-                        Cancel
-                      </Button>
-                    </>
-                  )
+                  <AvailableInProgButton
+                    postId={String(detail!.id)}
+                    status={detail!.status}
+                  />
                 ) : (
-                  <DeleteButton postId={String(detail?.id)} />
+                  <DeleteButton postId={String(detail!.id)} />
                 )}
               </View>
             </BottomView>
@@ -221,6 +228,53 @@ export const WastePostContent = ({ id }: { id: string }) => {
       </BottomModalSheet>
     </>
   );
+};
+
+const AvailableInProgButton = ({
+  postId,
+  status,
+}: {
+  postId: string;
+  status: string;
+}) => {
+  const [statusState, setStatus] = useState<string>(status);
+  const handleAccept = () => {
+    setStatus("INPROGRESS");
+    Toast.show("Accepted", Toast.LONG);
+  };
+  const handleFinish = () => {
+    setStatus("DONE");
+    Toast.show("Task completed.", Toast.LONG);
+  };
+  const handleCancel = () => {
+    setStatus("AVAILABLE");
+    Toast.show("Task cancelled.", Toast.LONG);
+  };
+  if (statusState === "AVAILABLE") {
+    return (
+      <Button onPress={handleAccept} containerStyle={{ flex: 1 }}>
+        ACCEPT TASK
+      </Button>
+    );
+  }
+
+  if (statusState === "INPROGRESS") {
+    return (
+      <>
+        <Button onPress={handleFinish} containerStyle={{ flex: 1 }}>
+          Finish
+        </Button>
+        <Button
+          onPress={handleCancel}
+          type="outline"
+          containerStyle={{ flex: 1 }}
+        >
+          Cancel
+        </Button>
+      </>
+    );
+  }
+  return null;
 };
 
 const DeleteButton = ({ postId }: { postId: string }) => {
@@ -238,7 +292,7 @@ const DeleteButton = ({ postId }: { postId: string }) => {
         const errors = error.errors;
         // console.log(errors.statu);
       }
-      console.log(error.status);
+      console.error(error.status);
       Toast.show(`${errMsg}: ${error.status ?? "None"}`, Toast.LONG);
     },
     async onSuccess() {
@@ -353,10 +407,10 @@ export const WasteContentFAB = () => {
       icon={{ name: "arrow-back", color: theme.colors.black }}
       onPress={() => {
         Promise.all([
-          new Promise<void>((resolve) => {
-            setTabShow(true);
-            resolve();
-          }),
+          // new Promise<void>((resolve) => {
+          //   setTabShow(true);
+          //   resolve();
+          // }),
           new Promise<void>((resolve) => {
             selectPost(null);
             resolve();

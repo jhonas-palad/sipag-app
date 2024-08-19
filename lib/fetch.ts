@@ -19,6 +19,7 @@ export async function fetchData<T extends any>(
   if (!response.ok) {
     badStatus = true;
   }
+
   let data;
   try {
     data = await response.json();

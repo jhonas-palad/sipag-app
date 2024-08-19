@@ -19,6 +19,7 @@ export const Maps = memo(
     overlayChildren,
     initialRegion,
     loading = false,
+    style,
     ...props
   }: { overlayChildren?: React.ReactNode; loading?: boolean } & Omit<
     MapViewProps,
@@ -33,10 +34,13 @@ export const Maps = memo(
           provider={
             Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
           }
-          style={{
-            width: "100%",
-            height: "70%",
-          }}
+          style={[
+            {
+              width: "100%",
+              height: "65%",
+            },
+            style,
+          ]}
           initialRegion={initialRegion}
           {...props}
         />
