@@ -11,3 +11,7 @@ export type WastePost = {
   created_at: string | Date;
   posted_by: User;
 };
+
+export type WastePostOptionals = {
+  [K in keyof WastePost]?: WastePost[K];
+};

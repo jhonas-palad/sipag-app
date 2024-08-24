@@ -2,16 +2,18 @@ import { create } from "zustand";
 import { findItem } from "@/utils/array";
 import { UserPost } from "@/types/user";
 import { immer } from "zustand/middleware/immer";
-import { WastePost } from "@/types/maps";
+import { WastePost, WastePostOptionals } from "@/types/maps";
 type WasteReportState = {
   posts: WastePost[] | null;
   selectedPost: string | null;
   totalFeeds: number | null;
+  wasteReportDetail: WastePost | null;
 };
 
 type WasteReportActions = {
   selectPost: (id: string | number | null) => void;
   setPosts: (posts: WastePost[]) => void;
+  setWasteReportDetail: (detail: WastePostOptionals | WastePost) => void;
 };
 
 export type WasteReportStore = WasteReportState & WasteReportActions;
@@ -20,6 +22,7 @@ const initialState: WasteReportState = {
   posts: null,
   selectedPost: null,
   totalFeeds: null,
+  wasteReportDetail: null,
 };
 export const useWasteReportStore = create<WasteReportStore>()(
   immer((set, get) => ({
@@ -41,6 +44,24 @@ export const useWasteReportStore = create<WasteReportStore>()(
       // if (currentFeed === null) {
       //   return;
       // }
+    },
+    wasteReportDetail: null,
+    setWasteReportDetail(detail) {
+      const wasteReportDetail = get().wasteReportDetail;
+      if (wasteReportDetail === null) {
+        set({
+          wasteReportDetail: {
+            ...(detail as WastePost),
+          },
+        });
+      } else {
+        set({
+          wasteReportDetail: {
+            ...wasteReportDetail,
+            ...(detail as WastePost),
+          },
+        });
+      }
     },
   }))
 );

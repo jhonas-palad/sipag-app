@@ -25,6 +25,7 @@ import { WastePost } from "@/types/maps";
 import { LinkFAB, FAB } from "@/components/ui/FAB";
 
 import { format } from "date-fns";
+import { postData } from "@/lib/fetch";
 
 //Currently selected marker details
 export const WastePostsBottomSheet = ({
@@ -248,7 +249,6 @@ export const WasteItemPost = (item: WastePost) => {
     [item]
   );
 
-  console.log(item.posted_by);
   const fullName = useMemo(() => {
     return `${item.posted_by.first_name} ${item.posted_by.last_name}`;
   }, [item.posted_by.first_name, item.posted_by.last_name]);
@@ -267,28 +267,11 @@ export const WasteItemPost = (item: WastePost) => {
     setContainerState({ showBtmModal: true });
   };
   return (
-    <ListItem.Swipeable
-      bottomDivider
-      onPress={handleZoomtoMarker}
-      rightContent={(reset) => (
-        <Button
-          title="Report (FE)"
-          disabled
-          radius="sm"
-          size="lg"
-          onPress={() => reset()}
-          buttonStyle={{
-            top: 2,
-            height: "100%",
-            backgroundColor: theme.colors.error,
-          }}
-        />
-      )}
-    >
+    <ListItem bottomDivider onPress={handleZoomtoMarker}>
       <Avatar
         size={32}
         rounded
-        source={require("@/assets/icons/garbage-svgrepo-com.svg")}
+        source={{ uri: item.posted_by.photo?.img_file }}
       />
       <ListItem.Content>
         <ListItem.Title style={{ fontWeight: "bold" }}>
@@ -324,8 +307,8 @@ export const WasteItemPost = (item: WastePost) => {
           {item.description}
         </Text>
       </ListItem.Content>
-      <ListItem.Chevron />
-    </ListItem.Swipeable>
+      {/* <ListItem.Chevron /> */}
+    </ListItem>
   );
 };
 

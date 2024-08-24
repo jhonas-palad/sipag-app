@@ -17,7 +17,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { ListItem } from "@rneui/themed";
 import { WastePost } from "@/types/maps";
 import { format, set } from "date-fns";
-import { useDeleteWastReport, useWasteReportPosts } from "@/data/waste-reports";
+import {
+  useDeleteWastReport,
+  useWasteReportActions,
+  useWasteReportPosts,
+} from "@/data/waste-reports";
 import { BottomView } from "@/components/ui/View";
 import { BottomModalSheet } from "@/components/ui/ModalSheet";
 import { useRef } from "react";
@@ -34,8 +38,13 @@ import { useAuthSession } from "@/store/auth";
 import Toast from "react-native-simple-toast";
 import { ResponseError } from "@/errors/response-error";
 import { boolean } from "zod";
+import { log } from "@/utils/logger";
 
-export const WastePostContent = () => {
+export const WastePostContent = ({
+  selectedPost,
+}: {
+  selectedPost: string;
+}) => {
   const { theme } = useTheme();
   const modalRef = useRef<BottomSheetModal>(null);
   const { showBtmModal } = useWasteContainerState(
@@ -43,47 +52,49 @@ export const WastePostContent = () => {
       showBtmModal: state.showBtmModal,
     }))
   );
-  const selectedPost = useWasteReportStore(
-    useShallow((state) => state.selectedPost)
-  );
-
+  // const { wasteReportDetail, setWasteReportDetail } = useWasteReportStore(
+  //   useShallow((state) => ({
+  //     wasteReportDetail: state.wasteReportDetail,
+  //     setWasteReportDetail: state.setWasteReportDetail,
+  //   }))
+  // );
   const user = useAuthSession(useShallow((state) => state.user));
-  const { data, isFetching, isLoading, isError } = useWasteReportPosts(
-    selectedPost ?? false
-  );
+  const {
+    data: wasteReportPost,
+    isFetching,
+    isLoading,
+    isError,
+  } = useWasteReportPosts(selectedPost);
 
-  const detail: WastePost | null = useMemo(() => {
-    const postData: WastePost = data?.data;
-    if (!postData) {
-      return null;
-    }
-    if (postData.created_at) {
-      postData.created_at = format(new Date(postData.created_at), "yyyy-MM-dd");
-    }
-    return {
-      id: postData.id,
-      created_at: postData.created_at,
-      description: postData.description,
-      location: postData.location,
-      posted_by: postData.posted_by,
-      status: postData.status,
-      thumbnail: postData.thumbnail,
-      title: postData.title,
-    };
-  }, [data]);
+  // const detail: WastePost | null = useMemo(() => {
+  //   if (!postData) {
+  //     return null;
+  //   }
+  //   if (postData.created_at) {
+  //     postData.created_at = format(new Date(postData.created_at), "yyyy-MM-dd");
+  //   }
+  //   return {
+  //     id: postData.id,
+  //     created_at: postData.created_at,
+  //     description: postData.description,
+  //     location: postData.location,
+  //     posted_by: postData.posted_by,
+  //     status: postData.status,
+  //     thumbnail: postData.thumbnail,
+  //     title: postData.title,
+  //   };
+  // }, [wasteReportPost]);
 
   const myPost = useMemo(() => {
-    if (!detail || !user) return null;
-    return user?.id === detail?.posted_by.id;
-  }, [user, detail]);
+    return user?.id === wasteReportPost?.posted_by.id;
+  }, [user, wasteReportPost]);
 
-  if (data === null || !showBtmModal) {
+  if (wasteReportPost === null || !showBtmModal) {
     return null;
   }
-
   return (
     <>
-      {showBtmModal && <WasteContentFAB />}
+      {showBtmModal !== null && <WasteContentFAB />}
 
       <BottomModalSheet
         enablePanDownToClose={false}
@@ -91,7 +102,7 @@ export const WastePostContent = () => {
         open={showBtmModal}
         snapPoints={["60%", "80%"]}
       >
-        {(isFetching || isLoading) && !detail ? (
+        {isFetching || isLoading ? (
           <LoadingScreen />
         ) : (
           <>
@@ -104,7 +115,7 @@ export const WastePostContent = () => {
                   alignItems: "center",
                 }}
               >
-                <ImageGradientUser {...detail!} />
+                <ImageGradientUser {...wasteReportPost!} />
 
                 <View style={[{ gap: 16 }]}>
                   <ListItem
@@ -127,7 +138,8 @@ export const WastePostContent = () => {
                         </Text>
                       </ListItem.Title>
                       <ListItem.Subtitle>
-                        {detail!.location.lng} {detail!.location.lat}
+                        {wasteReportPost?.location.lng}{" "}
+                        {wasteReportPost?.location.lat}
                       </ListItem.Subtitle>
                     </ListItem.Content>
                   </ListItem>
@@ -151,7 +163,7 @@ export const WastePostContent = () => {
                         </Text>
                       </ListItem.Title>
                       <ListItem.Subtitle>
-                        {detail!.description}
+                        {wasteReportPost?.description}
                       </ListItem.Subtitle>
                     </ListItem.Content>
                   </ListItem>
@@ -171,7 +183,7 @@ export const WastePostContent = () => {
                         </Text>
                       </ListItem.Title>
                       <ListItem.Subtitle>
-                        {detail!.posted_by.phone_number}
+                        {wasteReportPost?.posted_by.phone_number}
                       </ListItem.Subtitle>
                     </ListItem.Content>
                   </ListItem>
@@ -190,8 +202,8 @@ export const WastePostContent = () => {
                         </Text>
                       </ListItem.Title>
                       <ListItem.Subtitle>
-                        {detail?.posted_by.email
-                          ? detail.posted_by.email
+                        {wasteReportPost?.posted_by.email
+                          ? wasteReportPost.posted_by.email
                           : "None"}
                       </ListItem.Subtitle>
                     </ListItem.Content>
@@ -209,17 +221,17 @@ export const WastePostContent = () => {
               >
                 <Text>Status</Text>
                 <Text style={{ marginBottom: 4, fontWeight: "700" }}>
-                  {detail?.status}
+                  {wasteReportPost?.status}
                 </Text>
               </View>
               <View style={{ flexDirection: "row", gap: 8 }}>
                 {!myPost ? (
                   <AvailableInProgButton
-                    postId={String(detail!.id)}
-                    status={detail!.status}
+                    postId={String(wasteReportPost?.id)}
+                    status={wasteReportPost?.status as string}
                   />
                 ) : (
-                  <DeleteButton postId={String(detail!.id)} />
+                  <DeleteButton postId={String(wasteReportPost?.id)} />
                 )}
               </View>
             </BottomView>
@@ -238,16 +250,26 @@ const AvailableInProgButton = ({
   status: string;
 }) => {
   const [statusState, setStatus] = useState<string>(status);
+  const { mutate } = useWasteReportActions(postId, {
+    mutationKey: [status],
+    async onSuccess() {},
+    onError(error) {
+      log.error(error);
+    },
+  });
   const handleAccept = () => {
     setStatus("INPROGRESS");
+    mutate({ action: "accept" });
     Toast.show("Accepted", Toast.LONG);
   };
   const handleFinish = () => {
     setStatus("DONE");
+    mutate({ action: "done" });
     Toast.show("Task completed.", Toast.LONG);
   };
   const handleCancel = () => {
     setStatus("AVAILABLE");
+    mutate({ action: "cancel" });
     Toast.show("Task cancelled.", Toast.LONG);
   };
   if (statusState === "AVAILABLE") {
@@ -277,7 +299,13 @@ const AvailableInProgButton = ({
   return null;
 };
 
-const DeleteButton = ({ postId }: { postId: string }) => {
+const DeleteButton = ({
+  postId,
+  onSuccess,
+}: {
+  postId: string;
+  onSuccess?: () => void;
+}) => {
   const selectPost = useWasteReportStore(
     useShallow((state) => state.selectPost)
   );
@@ -292,12 +320,14 @@ const DeleteButton = ({ postId }: { postId: string }) => {
         const errors = error.errors;
         // console.log(errors.statu);
       }
-      console.error(error.status);
+      selectPost(null);
+      setContainerState({ showBtmModal: true });
       Toast.show(`${errMsg}: ${error.status ?? "None"}`, Toast.LONG);
     },
     async onSuccess() {
       selectPost(null);
       setContainerState({ showBtmModal: false });
+      onSuccess?.();
     },
   });
   const handleDelete = useCallback(() => {
@@ -393,6 +423,9 @@ export const WasteContentFAB = () => {
   const { top, left } = useSafeAreaInsets();
   const { theme } = useTheme();
   const selectPost = useWasteReportStore((state) => state.selectPost);
+  const setContainerState = useWasteContainerState(
+    useShallow((state) => state.setContainerState)
+  );
   const setTabShow = useToggleHideTab(useShallow((state) => state.setTabHide));
   const { initialRegion, mapRef } = useMapContext();
   return (
@@ -413,6 +446,7 @@ export const WasteContentFAB = () => {
           // }),
           new Promise<void>((resolve) => {
             selectPost(null);
+            setContainerState({ showBtmModal: false });
             resolve();
           }),
           new Promise<void>((resolve) => {

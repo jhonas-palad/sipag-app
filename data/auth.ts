@@ -17,6 +17,7 @@ import { agetValueSecureStore } from "@/lib/secure-store";
 import * as zod from "zod";
 import { authTokenKey, useAuthSession } from "@/store/auth";
 import { useShallow } from "zustand/react/shallow";
+import { log } from "@/utils/logger";
 export const AUTH_USER = "AUTH_USER";
 
 export type AuthTokenResponse = SuccessResponseData<User & { token: string }>;
@@ -87,16 +88,18 @@ export function useSignOutUser() {
 }
 
 export function useIsValidToken() {
+  log.debug("Checking user if authenticated");
   const { isAuthenticated, token } = useAuthSession(
     useShallow((state) => ({
       token: state.token,
       isAuthenticated: state.isAuthenticated,
     }))
   );
-  const resultMutation = useQuery({
+  const resultMutation = useQuery<SuccessResponseData<any>, ResponseError>({
     queryKey: [authTokenKey],
     async queryFn() {
       if (isAuthenticated()) {
+        log.debug("Verifying token");
         return await postData(
           "/api/v1/auth/verify",
           JSON.stringify({

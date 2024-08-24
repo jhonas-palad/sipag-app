@@ -156,15 +156,15 @@ importers:
       '@types/react-test-renderer':
         specifier: ^18.0.7
         version: 18.3.0
-      chalk:
-        specifier: 4.1.2
-        version: 4.1.2
       jest:
         specifier: ^29.2.1
         version: 29.7.0(@types/node@20.14.10)
       jest-expo:
         specifier: ~51.0.3
         version: 51.0.3(@babel/core@7.24.7)(jest@29.7.0(@types/node@20.14.10))(react@18.2.0)
+      react-native-logs:
+        specifier: ^5.1.0
+        version: 5.1.0
       react-test-renderer:
         specifier: 18.2.0
         version: 18.2.0(react@18.2.0)
@@ -4217,6 +4217,9 @@ packages:
     resolution: {integrity: sha512-m3CkXWss6B1dd6mCMleLpzDCJJGGaHOLQsUzZv8kAASJmMfmVT4d2fx375iXKTRWT25ThBfae3dECuX5cq/8hg==}
     peerDependencies:
       react: ^16.6.0 || ^17.0.0 || ^18.0.0
+
+  react-native-logs@5.1.0:
+    resolution: {integrity: sha512-bnTDoML/xH2V16ica6q4OJN7LIT0yz9mgeiAR1l3lvMTV6qfPGpiyy1G39mNfVorGIh3KbMLd6Av8dE2Pc33yA==}
 
   react-native-maps@1.14.0:
     resolution: {integrity: sha512-ai7h4UdRLGPFCguz1fI8n4sKLEh35nZXHAH4nSWyAeHGrN8K9GjICu9Xd4Q5Ok4h+WwrM6Xz5pGbF3Qm1tO6iQ==}
@@ -10603,6 +10606,8 @@ snapshots:
       react: 18.2.0
       react-fast-compare: 3.2.2
       shallowequal: 1.1.0
+
+  react-native-logs@5.1.0: {}
 
   react-native-maps@1.14.0(react-native-web@0.19.12(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-native@0.74.3(@babel/core@7.24.7)(@babel/preset-env@7.24.7(@babel/core@7.24.7))(@types/react@18.2.79)(react@18.2.0))(react@18.2.0):
     dependencies:

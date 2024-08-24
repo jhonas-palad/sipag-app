@@ -1,5 +1,4 @@
 import React from "react";
-import { ScrollView } from "react-native";
 import { IdentityForm } from "@/components/forms/auth/IdentityForm";
 import { View } from "@/components/ui/View";
 import { Text } from "@rneui/themed";

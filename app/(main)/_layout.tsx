@@ -12,6 +12,7 @@ import { useIsValidToken } from "@/data/auth";
 import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "expo-router";
 import { LoadingScreen } from "@/components/LoadingScreen";
+import { log } from "@/utils/logger";
 type Props = {};
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
@@ -69,12 +70,13 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 }
 
 const MainLayout = (props: Props) => {
-  const { isError, isPending } = useIsValidToken();
+  const { isError, isPending, error } = useIsValidToken();
 
   if (isPending) {
     return <LoadingScreen />;
   }
   if (isError) {
+    log.debug("Not Authenticated", error.errors);
     return <Redirect href="/auth" />;
   }
   return (

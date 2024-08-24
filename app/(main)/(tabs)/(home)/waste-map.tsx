@@ -1,10 +1,7 @@
 import { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
-import React, { useMemo, useState } from "react";
-import * as Location from "expo-location";
-import { Image } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
 import { View } from "@/components/ui/View";
-import { Text } from "@/components/ui/Text";
-
+import { type SuccessResponseData } from "@/types/response";
 import MapView, {
   LatLng,
   Callout,
@@ -26,9 +23,21 @@ import { useWasteReportPosts } from "@/data/waste-reports";
 import { WastePostContent } from "./WastePostContents";
 import { GarbageSVG } from "@/components/svg/garbage";
 import { useShallow } from "zustand/react/shallow";
+import { log } from "@/utils/logger";
 export const WasteMapView = () => {
   const { theme } = useTheme();
-  const { data, isFetching, isLoading, isError, error } = useWasteReportPosts();
+  // const { wastePosts, setPosts } = useWasteReportStore(
+  //   useShallow((state) => ({
+  //     wastePosts: state.posts,
+  //     setPosts: state.setPosts,
+  //   }))
+  // );
+  const {
+    data: wastePosts,
+    isFetching,
+    isLoading,
+    isError,
+  } = useWasteReportPosts(null);
   const selectedPost = useWasteReportStore(
     useShallow((state) => state.selectedPost)
   );
@@ -55,16 +64,16 @@ export const WasteMapView = () => {
       overlayChildren={
         <>
           <WastePostsBottomSheet
-            posts={isError ? null : data?.data}
+            posts={wastePosts as WastePost[]}
             error={isError}
             loading={isFetching || isLoading}
           />
-          <WastePostContent />
+          {selectedPost && <WastePostContent selectedPost={selectedPost} />}
         </>
       }
     >
-      {data?.data &&
-        (data.data as WastePost[]).map(({ id, location }, key) => (
+      {wastePosts &&
+        (wastePosts as WastePost[]).map(({ id, location }, key) => (
           <WasteMapMarker key={key} id={id} location={location} />
         ))}
     </Maps>
@@ -80,12 +89,6 @@ export const WasteMapMarker = ({
   ...props
 }: CommunityMapMarkerProps) => {
   const { theme } = useTheme();
-  const coordinates = useMemo(() => {
-    return regionCoordinates({
-      latitude: location.lat,
-      longitude: location.lng,
-    });
-  }, [location]);
   const { mapRef } = useMapContext();
   const setContainerState = useWasteContainerState(
     useShallow((state) => state.setContainerState)

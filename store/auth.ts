@@ -1,11 +1,13 @@
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { User } from "@/types/user";
+
 import {
   saveSecureStore,
   getValueSecureStore,
   deleteKeySecureStore,
 } from "@/lib/secure-store";
+import { log } from "@/utils/logger";
 type AuthSessionState = {
   token: string | null;
   user: User | null;
@@ -30,7 +32,7 @@ export const useAuthSession = create<AuthSessionState & AuthSessionAction>()(
 
       if (!token) {
         token = getValueSecureStore(authTokenKey) as string | null;
-        setToken(token!);
+        token && setToken(token!);
       }
       if (!user) {
         let userString = getValueSecureStore(authUserIdKey)!;
@@ -39,11 +41,9 @@ export const useAuthSession = create<AuthSessionState & AuthSessionAction>()(
           setUser(user!);
         }
       }
-
       return !!user && !!token;
     },
     setToken(token) {
-      console.log("TOKEN IS SAVE")
       saveSecureStore(authTokenKey, token);
       set({ token: token });
     },

@@ -20,7 +20,7 @@ import Toast from "react-native-simple-toast";
 import { signInUser } from "@/data/auth";
 import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
 import { useAuthSession } from "@/store/auth";
-import { logger } from "@/utils/logger";
+import { log } from "@/utils/logger";
 import { ResponseError } from "@/errors/response-error";
 type Props = {};
 
@@ -82,8 +82,9 @@ export const SigninForm = (props: Props) => {
         session.setToken(responseData.token);
         session.setUser(responseData.user);
         router.replace("/");
+        log.debug("Navigating to home screen");
       } catch (err) {
-        console.log(err);
+        log.error(err);
       }
     },
   });
