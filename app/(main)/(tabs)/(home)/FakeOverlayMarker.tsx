@@ -13,6 +13,8 @@ export const FakeOverlayMarker = memo(({ show }: { show: boolean }) => {
   );
 });
 
+FakeOverlayMarker.displayName = "FakeOverlayMarker";
+
 const styles = StyleSheet.create({
   fakeMarker: {
     zIndex: 50,
@@ -21,10 +23,8 @@ const styles = StyleSheet.create({
     marginLeft: -30,
     left: "50%",
     top: "50%",
-    // borderWidth: 1,
   },
   fakeMarkerImage: {
-    // borderWidth: 1,
     width: 40,
     height: 40,
   },

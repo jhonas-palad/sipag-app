@@ -1,7 +1,5 @@
 import { Stack } from "expo-router";
-import { useTheme } from "@rneui/themed";
 const SignupStack = () => {
-  const { theme } = useTheme();
   return (
     <Stack
       screenOptions={{ headerTitleAlign: "center", headerTitle: "Signup" }}

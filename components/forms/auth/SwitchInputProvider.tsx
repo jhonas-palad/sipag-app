@@ -25,9 +25,8 @@ export const SwitchInputProvider = <T extends string>({
   }, [inputs]);
   const switchInput = useCallback(() => {
     const currIdx = (inputs.indexOf(using) + 1) % inputLen;
-    console.log(currIdx, using);
     setUsing(inputs[currIdx]);
-  }, [inputs, using]);
+  }, [inputs, using, inputLen]);
   return (
     <SwitchInpuContext.Provider value={{ using, switchInput, inputs }}>
       {children}

@@ -19,6 +19,9 @@ export const BottomModalSheet = forwardRef<
     if (open) {
       //@ts-ignore
       (innerRef.current as BottomSheetModalMethods).present();
+    } else {
+      //@ts-ignore
+      (innerRef.current as BottomSheetModalMethods).close();
     }
   }, [ref, open]);
   return (
@@ -44,3 +47,5 @@ export const BottomModalSheet = forwardRef<
     </GBottomSheetModal>
   );
 });
+
+BottomModalSheet.displayName = "BottomModalSheet";

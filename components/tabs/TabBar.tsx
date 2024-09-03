@@ -12,14 +12,14 @@ export const TabBar = ({
   navigation,
 }: BottomTabBarProps) => {
   const { theme } = useTheme();
-  // const hide = useToggleHideTab((state) => state.hide);
+  const hide = useToggleHideTab((state) => state.hide);
   return (
     <View
       style={[
         styles.tabbar,
         {
           backgroundColor: theme.colors.white,
-          // display: hide ? "none" : "flex",
+          display: hide ? "none" : "flex",
         },
       ]}
     >
@@ -64,7 +64,7 @@ export const TabBar = ({
             onLongPress={onLongPress}
             isFocused={isFocused}
             routeName={route.name}
-            color={isFocused ? theme.colors.primary : theme.colors.grey5}
+            color={isFocused ? theme.colors.primary : theme.colors.grey0}
             //@ts-ignore
             label={label}
           />
@@ -76,7 +76,7 @@ export const TabBar = ({
 
 const styles = StyleSheet.create({
   tabbar: {
-    position: "absolute",
+    // position: "absolute",
     bottom: 0,
     width: "100%",
     flexDirection: "row",

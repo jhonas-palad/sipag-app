@@ -1,8 +1,6 @@
 import React, { useRef } from "react";
 import { Platform, ActivityIndicator } from "react-native";
-import { View } from "./ui/View";
 import MapView, {
-  LatLng,
   PROVIDER_DEFAULT,
   PROVIDER_GOOGLE,
   type MapViewProps,
@@ -56,6 +54,7 @@ export const Maps = memo(
     );
   }
 );
+Maps.displayName = "Maps";
 
 export const useMapContext = (): MapProviderContextProps => {
   const val = useContext(MapContext);

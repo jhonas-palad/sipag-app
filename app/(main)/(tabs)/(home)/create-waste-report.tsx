@@ -1,23 +1,19 @@
 import { StyleSheet } from "react-native";
 import { useToggleHideTab } from "@/store/tab";
-import React, { useLayoutEffect, useMemo } from "react";
+import React from "react";
+import { useFocusEffect } from "expo-router";
 import { View } from "@/components/ui/View";
-import { useTheme, FAB } from "@rneui/themed";
-import { useForm } from "react-hook-form";
-import { Text } from "@/components/ui/Text";
 import { CreateWasteReportForm } from "./CreateWasteReportForm";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { GoBackFAB } from "@/components/GoBackFAB";
 type Props = {};
 
 const AddContents = (props: Props) => {
   const setHideTab = useToggleHideTab((state) => state.setTabHide);
-  useLayoutEffect(() => {
+  useFocusEffect(() => {
     setHideTab(true);
     return () => {
       setHideTab(false);
     };
-  }, [setHideTab]);
+  });
   return (
     <View style={[styles.container, { flex: 1 }]}>
       <CreateWasteReportForm />

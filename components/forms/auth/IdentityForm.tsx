@@ -5,13 +5,12 @@ import { Input } from "@/components/ui/Input";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { useForm } from "react-hook-form";
-import { SignupSchema, type SignupFormSchemaType } from "@/schemas/auth";
+import { SignupSchema } from "@/schemas/auth";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
-import { ErrorDialog } from "./ErrorDialog";
 import * as zod from "zod";
 
 const IdentityFormSchema = SignupSchema.omit({
@@ -23,15 +22,13 @@ const IdentityFormSchema = SignupSchema.omit({
 type IdentityFormSchemaType = zod.infer<typeof IdentityFormSchema>;
 export const IdentityForm = () => {
   const router = useRouter();
-  const { getFormState, setFormState, first_name, last_name } =
-    useSignupFormState(
-      useShallow((state) => ({
-        getFormState: state.getFormState,
-        setFormState: state.setFormState,
-        first_name: state.first_name,
-        last_name: state.last_name,
-      }))
-    );
+  const { setFormState, first_name, last_name } = useSignupFormState(
+    useShallow((state) => ({
+      setFormState: state.setFormState,
+      first_name: state.first_name,
+      last_name: state.last_name,
+    }))
+  );
 
   const form = useForm<IdentityFormSchemaType>({
     resolver: zodResolver(IdentityFormSchema),
@@ -43,24 +40,16 @@ export const IdentityForm = () => {
 
   const handleSubmit = useCallback(
     (data: IdentityFormSchemaType) => {
-      console.log(data);
       setFormState({
         first_name: data.first_name,
         last_name: data.last_name,
       });
       router.push("/auth/(sign-up)/credentials-form");
     },
-    [setFormState]
+    [setFormState, router]
   );
   return (
     <Form {...form}>
-      {form.formState.errors.root?.message && (
-        <ErrorDialog
-          title="Signup Failed"
-          description={form.formState.errors.root?.message}
-        />
-      )}
-
       <FormField
         control={form.control}
         name="first_name"

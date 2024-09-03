@@ -1,6 +1,4 @@
 import { create } from "zustand";
-import { findItem } from "@/utils/array";
-import { UserPost } from "@/types/user";
 import { immer } from "zustand/middleware/immer";
 import { WastePost, WastePostOptionals } from "@/types/maps";
 type WasteReportState = {

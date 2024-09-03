@@ -2,7 +2,6 @@ import {
   type PropsWithChildren,
   createContext,
   useContext,
-  forwardRef,
   useId,
   useMemo,
 } from "react";
@@ -87,7 +86,7 @@ const FormItem = ({ children }: PropsWithChildren) => {
 };
 
 const FormLabel = ({ children }: PropsWithChildren) => {
-  const { error, formItemId } = useFormField();
+  const { error } = useFormField();
   return (
     <ThemedText
       style={[
@@ -122,8 +121,8 @@ const FormDescription = ({
   );
 };
 const FormMessage = ({ children }: PropsWithChildren) => {
-  const { error, name } = useFormField();
-
+  const { error } = useFormField();
+  const { theme } = useTheme();
   const body = useMemo(() => {
     if (!error || children) {
       return children;
@@ -133,13 +132,16 @@ const FormMessage = ({ children }: PropsWithChildren) => {
       error?.message?.length! > 1
     ) {
       return (error?.message as any).map((err_msg: string, index: number) => (
-        <Text key={index} style={[styles.baseText, styles.formMessage]}>
+        <Text
+          key={index}
+          style={[styles.baseText, { color: theme.colors.error }]}
+        >
           - {err_msg}
         </Text>
       ));
     }
     return String(error?.message);
-  }, [error, children]);
+  }, [error, children, theme]);
 
   if (!body) {
     return null;
@@ -156,7 +158,8 @@ const FormMessage = ({ children }: PropsWithChildren) => {
       style={[
         styles.baseText,
         styles.formMessage,
-        { display: "flex", flexDirection: "column" },
+
+        { display: "flex", flexDirection: "column", color: theme.colors.error },
       ]}
     >
       {body}

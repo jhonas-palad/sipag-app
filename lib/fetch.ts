@@ -1,9 +1,8 @@
 import { agetValueSecureStore } from "./secure-store";
 import { authTokenKey } from "@/store/auth";
-import * as FileSystem from "expo-file-system";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
-import FormData from "form-data";
+import { Router } from "expo-router";
 export const BASE_URL =
   process.env.EXPO_PUBLIC_MODE === "development"
     ? process.env.EXPO_PUBLIC_SIPAG_API_URL
@@ -41,18 +40,16 @@ export async function fetchData<T extends any>(
 
 export async function postData<T>(
   url: string | URL,
-  body: RequestInit["body"] | Record<string, string> | FormData,
   token: string | null = "",
-  contentType: string = "application/json",
   opts?: RequestInit
 ) {
   let tokenInit = token ? await initAuth(token) : {};
   let init = { ...tokenInit, ...opts };
   init.method = init.method ?? "POST";
-  init.body = body as RequestInit["body"];
   init.headers = {
-    "Content-Type": contentType,
+    "Content-Type": "application/json",
     ...init.headers,
+    ...tokenInit.headers,
   };
   return await fetchData<T>(url, init);
 }
@@ -66,50 +63,27 @@ export async function getData(
   return await fetchData(url, init);
 }
 
-export const postDataWithImage = async (
-  url: string,
-  body: {
-    image: string;
-    [key: string]: any;
-  },
-  token: string | null = null,
-  opts?: RequestInit
-) => {
-  url = String(new URL(url, BASE_URL));
-  const bodyClone = { ...body };
-  const imageUri = bodyClone.image;
-  //@ts-ignore
-  delete bodyClone.image;
-  let tokenInit = token ? await initAuth(token) : {};
-  let init = { ...tokenInit, ...opts };
-  let headers = init.headers ?? {};
-  const { status, body: responseBody } = await FileSystem.uploadAsync(
-    url,
-    imageUri,
-    {
-      fieldName: "image",
-      httpMethod:
-        (init.method as FileSystem.FileSystemAcceptedUploadHttpMethod) ??
-        "POST",
-      parameters: {
-        ...bodyClone,
-      },
-
-      headers: headers as Record<string, string>,
-      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+export const fetchRedirectWrapper =
+  <T>(func: (...args: any) => Promise<SuccessResponseData<T>>) =>
+  async (
+    url: string | URL,
+    token: string | null,
+    opts: RequestInit = {},
+    router: Router
+  ) => {
+    try {
+      return await func(url, token, opts);
+    } catch (err) {
+      if (err instanceof ResponseError && err.status === 401) {
+        router.replace("/auth");
+      } else {
+        throw err;
+      }
     }
-  );
-  if (status >= 400) {
-    console.log("status", status);
-    throw new ResponseError(
-      `Failed to post data: ${status}`,
-      null,
-      responseBody,
-      status
-    );
-  }
-  return body;
-};
+  };
+
+export const getDataRedirect = fetchRedirectWrapper(getData);
+export const postDataRedirect = fetchRedirectWrapper(postData);
 
 export const initAuth = async (token: string | null): Promise<RequestInit> => {
   if (!token) {

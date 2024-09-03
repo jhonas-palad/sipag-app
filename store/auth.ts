@@ -7,7 +7,6 @@ import {
   getValueSecureStore,
   deleteKeySecureStore,
 } from "@/lib/secure-store";
-import { log } from "@/utils/logger";
 type AuthSessionState = {
   token: string | null;
   user: User | null;

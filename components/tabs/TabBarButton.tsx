@@ -17,7 +17,7 @@ export const icons = (route: string, color: string) => {
       name = "campaign";
       break;
   }
-  return <Icon name={name} color={color} size={36} />;
+  return <Icon name={name} color={color} size={24} />;
 };
 
 type TabBarButtonProps = {

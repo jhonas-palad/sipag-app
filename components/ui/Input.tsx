@@ -34,12 +34,12 @@ export const Input = forwardRef<React.ElementRef<typeof TextInput>, TextInputP>(
       type,
       ...props
     },
-    ref,
+    ref
   ) => {
     const innerRef = useRef<TextInput>(null);
     const upperCaseLabel = useMemo(
       () => label?.toString().toUpperCase(),
-      [label],
+      [label]
     );
     const [focused, setFocused] = useState<boolean>(false);
     const { theme } = useTheme();
@@ -48,14 +48,14 @@ export const Input = forwardRef<React.ElementRef<typeof TextInput>, TextInputP>(
         onFocus?.(e);
         setFocused(true);
       },
-      [onFocus],
+      [onFocus]
     );
     const handleBlur = useCallback(
       (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
         onBlur?.(e);
         setFocused(false);
       },
-      [onBlur],
+      [onBlur]
     );
     const innerStyle = useMemo<TextInputProps["style"]>(() => {
       return {
@@ -63,15 +63,15 @@ export const Input = forwardRef<React.ElementRef<typeof TextInput>, TextInputP>(
           type === "clear"
             ? "transparent"
             : focused
-              ? theme.colors.primary
-              : "transparent",
+            ? theme.colors.primary
+            : "transparent",
         borderRadius: theme.spacing.lg,
         backgroundColor:
           type === "clear"
             ? "transparent"
             : !disabled
-              ? theme.colors.grey5
-              : theme.colors.grey4,
+            ? theme.colors.grey5
+            : theme.colors.grey4,
         borderWidth: 1.5,
         borderBottomWidth: 1.5, //We need to set this, because borderBottomWidth is implictly set by REInput
       };
@@ -100,8 +100,10 @@ export const Input = forwardRef<React.ElementRef<typeof TextInput>, TextInputP>(
         {...props}
       />
     );
-  },
+  }
 );
+
+Input.displayName = "Input";
 
 export const TextArea = forwardRef<
   React.ElementRef<typeof TextInput>,
@@ -110,7 +112,6 @@ export const TextArea = forwardRef<
   }
 >(({ asFormItem, maxLength = 150, onChange, ...props }, ref) => {
   const [count, setCount] = useState<number>(maxLength);
-  const [rowCount, setRowcount] = useState<number>(1);
   const handleCharsLeft = useCallback(
     (e: NativeSyntheticEvent<TextInputChangeEventData>) => {
       if (maxLength > e.nativeEvent.text.length) {
@@ -120,7 +121,7 @@ export const TextArea = forwardRef<
       }
       onChange?.(e);
     },
-    [count],
+    [setCount, maxLength, onChange]
   );
   if (asFormItem) {
     return (

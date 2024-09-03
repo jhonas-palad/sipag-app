@@ -1,6 +1,4 @@
 import { Text as RNEText, TextProps } from "@rneui/themed";
-import { useTheme } from "@rneui/themed";
-import { StyleSheet } from "react-native";
 import React from "react";
 
 type Props = {
@@ -14,15 +12,3 @@ export const Text = ({ children, ...props }: Props) => {
     </RNEText>
   );
 };
-
-const styles = StyleSheet.create({
-  sm: {
-    fontSize: 16,
-  },
-  md: {
-    fontSize: 20,
-  },
-  lg: {
-    fontSize: 24,
-  },
-});

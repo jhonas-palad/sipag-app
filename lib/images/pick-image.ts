@@ -1,4 +1,3 @@
-import { CommonReturnResult } from "@/global";
 import * as ImagePicker from "expo-image-picker";
 import { useMutation, UseMutationOptions } from "@tanstack/react-query";
 export const pickImage = async (): Promise<ImagePicker.ImagePickerAsset> => {

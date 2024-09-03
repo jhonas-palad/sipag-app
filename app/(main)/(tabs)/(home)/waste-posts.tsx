@@ -1,6 +1,7 @@
 import "react-native-reanimated";
+import React, { useRef, useMemo, useCallback, useEffect } from "react";
 import { StyleSheet, ActivityIndicator } from "react-native";
-import { BottomView, View } from "@/components/ui/View";
+import { View } from "@/components/ui/View";
 import { useShallow } from "zustand/react/shallow";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 import { Text, ListItem, useTheme, Avatar } from "@rneui/themed";
@@ -10,22 +11,17 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
-import { WastePostContent } from "./WastePostContents";
-import React, { useRef, useMemo, useCallback, useEffect } from "react";
-import { useToggleHideTab } from "@/store/tab";
 import {
   useWasteContainerState,
   useWasteReportStore,
 } from "@/store/waste-report";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Link, useRouter } from "expo-router";
 import { useMapContext } from "@/components/Maps";
 import { Badge } from "@rneui/base";
 import { WastePost } from "@/types/maps";
 import { LinkFAB, FAB } from "@/components/ui/FAB";
-
 import { format } from "date-fns";
-import { postData } from "@/lib/fetch";
+import { useQueryClient } from "@tanstack/react-query";
+import { WASTE_REPORTS } from "@/data/waste-reports";
 
 //Currently selected marker details
 export const WastePostsBottomSheet = ({
@@ -37,19 +33,12 @@ export const WastePostsBottomSheet = ({
   error?: boolean;
   loading?: boolean;
 }) => {
-  const { selectedPost, setPosts } = useWasteReportStore(
+  const { selectedPost } = useWasteReportStore(
     useShallow((state) => ({
-      setPosts: state.setPosts,
       selectedPost: state.selectedPost,
     }))
   );
-
-  useEffect(() => {
-    if (!error && posts !== undefined) {
-      setPosts(posts);
-    }
-  }, [posts]);
-
+  const queryClient = useQueryClient();
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const snapPoints = useMemo(() => ["40%", "60%", "80%"], []);
 
@@ -59,6 +48,9 @@ export const WastePostsBottomSheet = ({
     selectedPost && bottomSheetRef.current?.snapToIndex(0);
   }, [selectedPost]);
 
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [WASTE_REPORTS] });
+  }, [queryClient]);
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -110,7 +102,11 @@ export const WastePostsBottomSheet = ({
                   size="small"
                 />
 
-                <FAB icon={{ name: "sync" }} size="small" />
+                <FAB
+                  icon={{ name: "sync" }}
+                  size="small"
+                  onPress={handleRefresh}
+                />
               </View>
             </View>
             <View
@@ -173,11 +169,9 @@ const BottomTextWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 const WastePostList = ({ posts }: { posts: WastePost[] }) => {
-  const { theme } = useTheme();
-  const router = useRouter();
   const renderItemPost = useCallback(
     ({ item }: { item: WastePost }) => <WasteItemPost {...item} />,
-    [posts, theme]
+    []
   );
   const renderEmptyListComponent = useCallback(
     () => (
@@ -190,7 +184,7 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
         <Button title="Post your waste concerns" />
       </BottomTextWrapper>
     ),
-    [theme]
+    []
   );
   const renderHeaderComponent = () => (
     <View style={{ paddingTop: 12 }}>
@@ -202,13 +196,7 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
   return (
     <BottomSheetFlatList
       bounces
-      style={{ paddingBottom: 100 }}
       ListHeaderComponent={renderHeaderComponent}
-      ListFooterComponent={() => (
-        <View style={{ height: 150, paddingTop: 20, paddingHorizontal: 24 }}>
-          <Button type="clear" title="Load more..." />
-        </View>
-      )}
       ListEmptyComponent={renderEmptyListComponent}
       data={posts}
       keyExtractor={({ id }) => id as string}
@@ -217,11 +205,9 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
   );
 };
 export const WasteItemPost = (item: WastePost) => {
-  const { theme } = useTheme();
   const { mapRef } = useMapContext();
-  const { setContainerState, showBtmModal } = useWasteContainerState(
+  const { setContainerState } = useWasteContainerState(
     useShallow((state) => ({
-      showBtmModal: state.showBtmModal,
       setContainerState: state.setContainerState,
     }))
   );
@@ -246,7 +232,7 @@ export const WasteItemPost = (item: WastePost) => {
           return "success";
       }
     },
-    [item]
+    []
   );
 
   const fullName = useMemo(() => {

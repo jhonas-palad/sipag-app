@@ -2,8 +2,6 @@ import { ScrollView, ViewProps } from "react-native";
 import { View } from "@/components/ui/View";
 import React from "react";
 
-type Props = {};
-
 const AuthScreenContainer = ({
   children,
   bottomChildren,
@@ -14,24 +12,28 @@ const AuthScreenContainer = ({
 }) => {
   return (
     <View
+      transparent
       style={[
         {
           flex: 1,
-          paddingVertical: 24,
-
-          paddingHorizontal: 24,
         },
         style,
       ]}
     >
       <ScrollView
-        contentContainerStyle={{
-          flex: 1,
+        style={{
+          paddingHorizontal: 24,
         }}
       >
-        {children}
+        <View transparent style={{ marginBottom: 12 }}>
+          {children}
+        </View>
       </ScrollView>
-      {bottomChildren}
+      {bottomChildren && (
+        <View transparent style={{ paddingHorizontal: 24, paddingBottom: 12 }}>
+          {bottomChildren}
+        </View>
+      )}
     </View>
   );
 };

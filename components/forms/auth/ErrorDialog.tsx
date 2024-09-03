@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Dialog, Text, useTheme } from "@rneui/themed";
+import { Dialog, Text } from "@rneui/themed";
 import { Button } from "@/components/ui/Button";
-import { View } from "@/components/ui/View";
 
 export type ErrorDialogProps = {
   title: string;
@@ -9,7 +8,6 @@ export type ErrorDialogProps = {
 };
 
 export const ErrorDialog = ({ title, description }: ErrorDialogProps) => {
-  const { theme } = useTheme();
   const [show, setShow] = useState(true);
   if (!show) {
     return null;

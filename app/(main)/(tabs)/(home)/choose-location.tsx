@@ -1,6 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Maps, useMapContext } from "@/components/Maps";
+import { Maps } from "@/components/Maps";
 import { Details, LatLng, Marker, Region } from "react-native-maps";
 import { Icon, useTheme } from "@rneui/themed";
 import { Button } from "@/components/ui/Button";
@@ -42,7 +42,7 @@ const ChooseLocation = (props: Props) => {
   const handleChooseLocation = useCallback(() => {
     setLatLangStore({ ...geoLocation });
     router.canGoBack() && router.back();
-  }, [geoLocation]);
+  }, [geoLocation, router, setLatLangStore]);
 
   useEffect(() => {
     return () =>
@@ -50,18 +50,15 @@ const ChooseLocation = (props: Props) => {
         longitude: initialRegion.longitude,
         latitude: initialRegion.latitude,
       });
-  }, []);
+  }, [initialRegion]);
 
-  const handleChangeRegion = useCallback(
-    (region: Region, details: Details) => {
-      setShowFakeMarker(false);
-      setGeolocation({
-        latitude: region.latitude,
-        longitude: region.longitude,
-      });
-    },
-    [showFakeMarker]
-  );
+  const handleChangeRegion = useCallback((region: Region, details: Details) => {
+    setShowFakeMarker(false);
+    setGeolocation({
+      latitude: region.latitude,
+      longitude: region.longitude,
+    });
+  }, []);
   return (
     <View style={styles.container}>
       <Maps

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Input } from "@/components/ui/Input";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
@@ -7,17 +7,13 @@ import { Link, useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
-import { Icon, Text, useTheme } from "@rneui/themed";
+import { Icon, useTheme } from "@rneui/themed";
 import * as Haptics from "expo-haptics";
 import { useShallow } from "zustand/react/shallow";
-import {
-  SiginFormSchema,
-  SignupFormSchemaType,
-  type SiginFormSchemaType,
-} from "@/schemas/auth";
+import { SiginFormSchema, type SiginFormSchemaType } from "@/schemas/auth";
 import Toast from "react-native-simple-toast";
 
-import { signInUser } from "@/data/auth";
+import { useSigninUser } from "@/data/auth";
 import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
 import { useAuthSession } from "@/store/auth";
 import { log } from "@/utils/logger";
@@ -44,12 +40,11 @@ export const SigninForm = (props: Props) => {
     },
   });
 
-  const { mutateAsync, data, status } = signInUser({
+  const { mutateAsync, status } = useSigninUser({
     async onError(error, variables, context) {
       let errMsg = "Sign in failed";
       if (error instanceof ResponseError) {
         const errors = error.errors;
-        console.log(errors);
         Object.keys(errors!).forEach((err_field: string) => {
           let key = err_field;
           if (NON_FIELD_ERROR === err_field) {
@@ -94,7 +89,7 @@ export const SigninForm = (props: Props) => {
     return () => {
       form.resetField(using);
     };
-  }, [using]);
+  }, [using, form]);
 
   const handleSubmit = async (data: SiginFormSchemaType) => {
     await mutateAsync(data);
@@ -211,10 +206,11 @@ export const SigninForm = (props: Props) => {
         type="solid"
         radius="lg"
         size="lg"
+        loading={status === "pending"}
         disabled={status === "pending"}
         onPress={form.handleSubmit(handleSubmit)}
       >
-        {status === "pending" ? "Signing in..." : "Sign in"}
+        Sign in
       </Button>
     </Form>
   );

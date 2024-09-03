@@ -26,8 +26,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCreateReportPost } from "@/data/waste-reports";
 import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
 import { ResponseError } from "@/errors/response-error";
-import { useAuthSession } from "@/store/auth";
 import Toast from "react-native-simple-toast";
+import { log } from "@/utils/logger";
 
 export const CreateWasteReportForm = () => {
   const { theme } = useTheme();
@@ -62,7 +62,7 @@ export const CreateWasteReportForm = () => {
     return () => {
       setLatLng({ latitude: null, longitude: null });
     };
-  }, [longitude, latitude]);
+  }, [longitude, latitude, form, setLatLng]);
 
   const { mutateAsync: postWasteReport, isPending: postPending } =
     useCreateReportPost({
@@ -71,6 +71,7 @@ export const CreateWasteReportForm = () => {
 
         if (error instanceof ResponseError) {
           const errors = error.errors;
+          log.debug(errors);
           Object.keys(errors!).forEach((err_field: string) => {
             let key = err_field;
             if (NON_FIELD_ERROR === err_field || ERR_DETAIL === err_field) {
@@ -85,7 +86,6 @@ export const CreateWasteReportForm = () => {
           });
           if (error.status === 401) {
             errMsg = "Session Expired";
-            router.replace("/auth");
           }
           if (error.status >= 500) {
             errMsg = "Internal Server Error. Please try again later.";
@@ -116,11 +116,10 @@ export const CreateWasteReportForm = () => {
   }, [mutateAsync]);
 
   const handleSubmit = useCallback(
-    form.handleSubmit(async (formData: WasteReportSchemaT) => {
-      //@ts-ignore
+    async (formData: WasteReportSchemaT) => {
       await postWasteReport(formData);
-    }),
-    [form]
+    },
+    [postWasteReport]
   );
   return (
     <Form {...form}>
@@ -253,7 +252,7 @@ export const CreateWasteReportForm = () => {
         >
           <Button
             title="Submit"
-            onPress={handleSubmit}
+            onPress={form.handleSubmit(handleSubmit)}
             buttonStyle={{ alignSelf: "flex-end" }}
           />
         </View>

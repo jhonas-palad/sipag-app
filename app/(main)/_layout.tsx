@@ -5,7 +5,7 @@ import {
   DrawerItem,
 } from "@react-navigation/drawer";
 import { View } from "@/components/ui/View";
-import { Text, Avatar, Icon } from "@rneui/themed";
+import { Text, Avatar, Icon, useTheme } from "@rneui/themed";
 import { Redirect } from "expo-router";
 import { useAuthSession } from "@/store/auth";
 import { useIsValidToken } from "@/data/auth";
@@ -13,10 +13,12 @@ import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "expo-router";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { log } from "@/utils/logger";
+import { Image } from "expo-image";
 type Props = {};
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const router = useRouter();
+  const { theme } = useTheme();
   const session = useAuthSession(
     useShallow((state) => ({
       user: state.user,
@@ -34,11 +36,20 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         }}
       >
         <Avatar
-          title="JH"
           rounded
-          containerStyle={{ backgroundColor: "red" }}
-        />
+          title={session.user?.photo ? undefined : "?"}
+          containerStyle={{ backgroundColor: theme.colors.greyOutline }}
+        >
+          {session.user?.photo && (
+            <Image
+              style={{ height: 35, width: 35 }}
+              placeholder={session.user?.photo?.hash}
+              source={{ uri: session.user?.photo?.img_file }}
+            />
+          )}
+        </Avatar>
         <View transparent>
+          <Text>ID: {session.user?.id}</Text>
           <Text h4>
             {session.user?.first_name} {session.user?.last_name}
           </Text>
@@ -79,6 +90,7 @@ const MainLayout = (props: Props) => {
     log.debug("Not Authenticated", error.errors);
     return <Redirect href="/auth" />;
   }
+
   return (
     <Drawer
       screenOptions={{ headerShown: false }}
@@ -86,14 +98,6 @@ const MainLayout = (props: Props) => {
     >
       {/* All other screens should be hidden */}
     </Drawer>
-  );
-};
-
-const DrawerItemSignOut = () => {
-  const session = useAuthSession(
-    useShallow((state) => {
-      return state.signOut;
-    })
   );
 };
 

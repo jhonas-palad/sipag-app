@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "sipag-app",
-    "slug": "sipag-app",
+    "slug": "sipag",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -22,7 +22,13 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "package": "com.paladj28.sipag"
     },
     "web": {
       "bundler": "metro",
@@ -46,6 +52,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "c287d8a1-bda5-489c-958c-39906ba04fa4"
+      }
+    },
+    "owner": "paladj28"
   }
 }

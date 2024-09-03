@@ -8,28 +8,27 @@ import { useForm } from "react-hook-form";
 import { SignupSchema, type SignupFormSchemaType } from "@/schemas/auth";
 import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, router } from "expo-router";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
-import { validateCredentials } from "@/data/auth";
+import { useValidateCredentials } from "@/data/auth";
 import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
-import { ErrorDialog } from "./ErrorDialog";
 import { ResponseError } from "@/errors/response-error";
-
+import Toast from "react-native-simple-toast";
+import { useRouter } from "expo-router";
 type Props = {};
 
 export const CredentialsForm = (props: Props) => {
   const [using, setUsing] = useState<"email" | "phone_number">("phone_number");
-  const { getFormState, setFormState, phone_number, email, password } =
-    useSignupFormState(
-      useShallow((state) => ({
-        getFormState: state.getFormState,
-        setFormState: state.setFormState,
-        phone_number: state.phone_number,
-        email: state.email,
-        password: state.password,
-      }))
-    );
+  const router = useRouter();
+  const { setFormState, phone_number, email, password } = useSignupFormState(
+    useShallow((state) => ({
+      getFormState: state.getFormState,
+      setFormState: state.setFormState,
+      phone_number: state.phone_number,
+      email: state.email,
+      password: state.password,
+    }))
+  );
   const resolver = useMemo(() => {
     if (using === "email") {
       return SignupSchema.omit({
@@ -55,11 +54,10 @@ export const CredentialsForm = (props: Props) => {
     },
   });
 
-  const { mutateAsync, data, status } = validateCredentials({
+  const { mutateAsync, status } = useValidateCredentials({
     async onError(error, variables, context) {
       if (error instanceof ResponseError) {
         const errors = error.errors;
-        console.log(errors);
         if (NON_FIELD_ERROR in errors!) {
           form.setError(using, { message: errors?.[NON_FIELD_ERROR] });
         }
@@ -73,12 +71,18 @@ export const CredentialsForm = (props: Props) => {
         });
         return;
       }
-
+      Toast.showWithGravityAndOffset(
+        (error as Error)?.message as string,
+        Toast.LONG,
+        1,
+        Toast.TOP,
+        Toast.TOP
+      );
       form.setError("root", { message: (error as Error)?.message as string });
     },
     async onSuccess(response_data) {
       const formValues = form.getValues();
-      const {data } = response_data;
+      const { data } = response_data;
       setFormState({
         ...data,
         password: formValues["password"],
@@ -91,7 +95,7 @@ export const CredentialsForm = (props: Props) => {
     async (data: SignupFormSchemaType) => {
       await mutateAsync(data);
     },
-    [setFormState]
+    [mutateAsync]
   );
 
   useEffect(() => {
@@ -99,16 +103,10 @@ export const CredentialsForm = (props: Props) => {
     return () => {
       setFormState({ [using]: "" });
     };
-  }, [using]);
+  }, [using, form, setFormState]);
 
   return (
     <Form {...form}>
-      {form.formState.errors.root?.message && (
-        <ErrorDialog
-          title="Signup Failed"
-          description={form.formState.errors.root?.message}
-        />
-      )}
       {using === "phone_number" ? (
         <FormField
           control={form.control}
@@ -184,6 +182,8 @@ export const CredentialsForm = (props: Props) => {
         radius="lg"
         size="lg"
         raised
+        loading={status === "pending"}
+        disabled={status === "pending"}
         buttonStyle={{ borderWidth: 1.5 }}
         onPress={form.handleSubmit(handleSubmit)}
       >
@@ -195,7 +195,6 @@ export const CredentialsForm = (props: Props) => {
 
 const styles = StyleSheet.create({
   inputContainer: {
-    
     marginBottom: 12,
   },
 });

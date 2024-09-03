@@ -9,13 +9,14 @@ export const FAB = forwardRef<Button, React.PropsWithoutRef<FABProps>>(
     return <RNEFAB {...props} />;
   }
 );
+FAB.displayName = "FAB";
 
 export const LinkFAB = ({
   href,
   push,
   replace,
   ...props
-}: FABProps & LinkProps) => {
+}: FABProps & LinkProps<string>) => {
   return (
     <Link href={href} push={push} replace={replace} asChild>
       <FAB {...props} />

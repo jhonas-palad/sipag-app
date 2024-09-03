@@ -1,5 +1,4 @@
 import { ResponseErrDetails } from "@/types/errors";
-import { logger } from "@/utils/logger";
 import { string } from "zod";
 export class ResponseError extends Error {
   _body: any;
@@ -25,6 +24,7 @@ export class ResponseError extends Error {
     }
     try {
       this._body = JSON.parse(this._body);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {}
     return this._body;
   }

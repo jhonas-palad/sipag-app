@@ -1,5 +1,4 @@
 import zod from "zod";
-import { ImageSchema } from "./image";
 export const email = zod
   .string()
   .min(1, { message: "Email is required" })

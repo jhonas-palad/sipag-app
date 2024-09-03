@@ -1,11 +1,10 @@
-import { View, Text, ViewProps } from "react-native";
+import { View, ViewProps } from "react-native";
 import React, { useMemo } from "react";
 import { FormField, FormItem, FormMessage } from "@/components/ui/Form";
 import { Input } from "@/components/ui/Input";
 import { type Control, type FieldValues } from "react-hook-form";
 import { useSwitchEmailPhone } from "./SwitchInputProvider";
 import { Button } from "@rneui/themed";
-type Props = {};
 
 export const SwitchEmailPhone = ({
   control,
@@ -49,7 +48,6 @@ export const SwitchButton = () => {
     <Button
       onPress={switchInput}
       type="clear"
-
       buttonStyle={{
         alignSelf: "center",
         borderColor: "transparent",

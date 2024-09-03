@@ -1,10 +1,6 @@
-import { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { View } from "@/components/ui/View";
-import { type SuccessResponseData } from "@/types/response";
-import MapView, {
-  LatLng,
-  Callout,
+import {
   Region,
   Marker,
   type MarkerPressEvent,
@@ -17,30 +13,26 @@ import {
   useWasteContainerState,
 } from "@/store/waste-report";
 import { WastePostsBottomSheet } from "./waste-posts";
-import { regionCoordinates } from "@/lib/maps/gotoRegion";
 import { useTheme, Icon } from "@rneui/themed";
 import { useWasteReportPosts } from "@/data/waste-reports";
 import { WastePostContent } from "./WastePostContents";
 import { GarbageSVG } from "@/components/svg/garbage";
 import { useShallow } from "zustand/react/shallow";
-import { log } from "@/utils/logger";
 export const WasteMapView = () => {
   const { theme } = useTheme();
-  // const { wastePosts, setPosts } = useWasteReportStore(
-  //   useShallow((state) => ({
-  //     wastePosts: state.posts,
-  //     setPosts: state.setPosts,
-  //   }))
-  // );
+
   const {
     data: wastePosts,
     isFetching,
     isLoading,
     isError,
   } = useWasteReportPosts(null);
-  const selectedPost = useWasteReportStore(
-    useShallow((state) => state.selectedPost)
+  const { selectedPost } = useWasteReportStore(
+    useShallow((state) => ({
+      selectedPost: state.selectedPost,
+    }))
   );
+
   const barangaySalaGeoPoints = useMemo<Region>(
     () => ({
       latitude: 14.100202432834427,
@@ -57,7 +49,6 @@ export const WasteMapView = () => {
       zoomControlEnabled={false}
       toolbarEnabled={false}
       loadingEnabled
-      onRegionChangeComplete={(r) => console.log(r)}
       // loading={isFetching || isLoading}
       loadingIndicatorColor={theme.colors.primary}
       initialRegion={barangaySalaGeoPoints}
@@ -93,7 +84,15 @@ export const WasteMapMarker = ({
   const setContainerState = useWasteContainerState(
     useShallow((state) => state.setContainerState)
   );
-  const selectPost = useWasteReportStore((state) => state.selectPost);
+
+  const { selectPost, selectedPost } = useWasteReportStore((state) => ({
+    selectedPost: state.selectedPost,
+    selectPost: state.selectPost,
+  }));
+  const selected = useMemo(() => {
+    return String(selectedPost) === String(id);
+  }, [selectedPost, id]);
+
   const handleOnpress = (e: MarkerPressEvent) => {
     e.preventDefault();
     selectPost(id);
@@ -111,6 +110,7 @@ export const WasteMapMarker = ({
     <Marker
       {...props}
       onPress={handleOnpress}
+      zIndex={selected ? 10 : 0}
       tracksViewChanges={false}
       coordinate={{ latitude: location.lat, longitude: location.lng }}
     >
@@ -129,7 +129,12 @@ export const WasteMapMarker = ({
       >
         <GarbageSVG />
       </View>
-      <Icon name="location-pin" color={theme.colors.divider} size={60} />
+      <Icon
+        name="location-pin"
+        color={selected ? theme.colors.primary : theme.colors.greyOutline}
+        size={60}
+        style={{ transform: [{ scale: selected ? 1.2 : 1 }] }}
+      />
     </Marker>
   );
 };

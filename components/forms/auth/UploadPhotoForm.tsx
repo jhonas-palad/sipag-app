@@ -7,24 +7,25 @@ import { usePickImage } from "@/lib/images/pick-image";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "expo-router";
-import { createUser } from "@/data/users";
+import { useCreateUser } from "@/data/users";
 import * as zod from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Toast from "react-native-simple-toast";
 type Props = {};
 const UploadPhotoSchema = zod.object({
   photo: zod
     .string()
-    .nullish()
+    .nullable()
     .refine(
       (url) => {
-        return url !== undefined || url !== null;
+        return !!url;
       },
       { message: "Please upload an image" }
     ),
 });
 export type UploadPhotoSchemaT = zod.infer<typeof UploadPhotoSchema>;
 const UploadPhotoForm = (props: Props) => {
-  const { first_name, last_name, email, phone_number, password, photo, reset } =
+  const { first_name, last_name, email, phone_number, password, reset } =
     useSignupFormState(
       useShallow((state) => ({
         first_name: state.first_name,
@@ -39,16 +40,17 @@ const UploadPhotoForm = (props: Props) => {
   const form = useForm<UploadPhotoSchemaT>({
     resolver: zodResolver(UploadPhotoSchema),
     defaultValues: {
-      photo: null,
+      photo: "",
     },
   });
   const { theme } = useTheme();
   const router = useRouter();
-  const { mutate } = createUser({
+  const { mutate, status } = useCreateUser({
     async onError(error) {
-      console.log("error", error);
+      Toast.show(String(error.message), Toast.SHORT);
     },
     onSuccess(data) {
+      Toast.show("Account Successfully created!", Toast.SHORT);
       router.replace("/auth");
       reset();
     },
@@ -70,11 +72,13 @@ const UploadPhotoForm = (props: Props) => {
 
   const { mutateAsync: pickImage, data: imageData } = usePickImage({
     onError(error) {
-      console.log(error);
-      form.setError("photo", { message: "Please choose an image" });
+      if (!form.getValues("photo")) {
+        form.setError("photo", { message: "Please choose an image" });
+      }
     },
     onSuccess(data) {
       form.setValue("photo", data.uri);
+      form.clearErrors();
     },
   });
   return (
@@ -86,12 +90,11 @@ const UploadPhotoForm = (props: Props) => {
           render={({ field }) => {
             return (
               <FormItem>
-                <FormMessage />
                 <Avatar
-                  size={300}
+                  size={200}
                   onPress={pickImage}
-                  source={imageData ? { uri: imageData?.uri! } : undefined}
-                  title={imageData ? undefined : "--"}
+                  source={field.value ? { uri: field.value } : undefined}
+                  title={field.value ? undefined : "--"}
                   containerStyle={{
                     borderRadius: 12,
                     backgroundColor: theme.colors.grey3,
@@ -119,6 +122,7 @@ const UploadPhotoForm = (props: Props) => {
                     </Text>
                   </View>
                 </Avatar>
+                <FormMessage />
               </FormItem>
             );
           }}
@@ -169,6 +173,8 @@ const UploadPhotoForm = (props: Props) => {
         size="lg"
         title="Submit"
         raised
+        loading={status === "pending"}
+        disabled={status === "pending"}
         buttonStyle={{ borderWidth: 1.5 }}
         onPress={form.handleSubmit(handleSubmit)}
       />

@@ -4,16 +4,11 @@ import {
   useMutation,
   UseMutationOptions,
 } from "@tanstack/react-query";
-import {
-  SignupSchema,
-  type SiginFormSchemaType,
-  type SignupFormSchemaType,
-} from "@/schemas/auth";
+import { SignupSchema, type SiginFormSchemaType } from "@/schemas/auth";
 import { UserDetailsType } from "@/schemas/users";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
 import { User } from "@/types/user";
-import { agetValueSecureStore } from "@/lib/secure-store";
 import * as zod from "zod";
 import { authTokenKey, useAuthSession } from "@/store/auth";
 import { useShallow } from "zustand/react/shallow";
@@ -22,7 +17,7 @@ export const AUTH_USER = "AUTH_USER";
 
 export type AuthTokenResponse = SuccessResponseData<User & { token: string }>;
 
-export function signInUser(
+export function useSigninUser(
   opts?: Omit<
     UseMutationOptions<AuthTokenResponse, ResponseError, SiginFormSchemaType>,
     "mutationKey" | "mutationFn"
@@ -35,11 +30,9 @@ export function signInUser(
   >({
     mutationKey: [AUTH_USER],
     async mutationFn(credentials: SiginFormSchemaType) {
-      return await postData(
-        "/api/v1/auth/signin",
-        JSON.stringify(credentials),
-        null
-      );
+      return await postData("/api/v1/auth/signin", null, {
+        body: JSON.stringify(credentials),
+      });
     },
     ...opts,
   });
@@ -56,7 +49,7 @@ const UserCredentialsSchema = SignupSchema.omit({
 });
 
 type UserCredentialsSchemaType = zod.infer<typeof UserCredentialsSchema>;
-export function validateCredentials(
+export function useValidateCredentials(
   opts?: Omit<
     UseMutationOptions<
       SuccessResponseData<Omit<UserCredentialsSchemaType, "password">>,
@@ -75,16 +68,15 @@ export function validateCredentials(
     async mutationFn(credentials: UserCredentialsSchemaType) {
       return await postData<UserDetailsType>(
         "/api/v1/users/credentials",
-        JSON.stringify(credentials)
+        null,
+        {
+          body: JSON.stringify(credentials),
+        }
       );
     },
     ...opts,
   });
   return resultMutation;
-}
-
-export function useSignOutUser() {
-  const resultMutation = useMutation({});
 }
 
 export function useIsValidToken() {
@@ -100,13 +92,11 @@ export function useIsValidToken() {
     async queryFn() {
       if (isAuthenticated()) {
         log.debug("Verifying token");
-        return await postData(
-          "/api/v1/auth/verify",
-          JSON.stringify({
+        return await postData("/api/v1/auth/verify", null, {
+          body: JSON.stringify({
             token: token!,
           }),
-          null
-        );
+        });
       }
       throw Error("No token found");
     },

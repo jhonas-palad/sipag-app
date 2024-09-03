@@ -10,6 +10,7 @@ export type WastePost = {
   status: string;
   created_at: string | Date;
   posted_by: User;
+  cleaner?: User;
 };
 
 export type WastePostOptionals = {
