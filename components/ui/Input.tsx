@@ -5,9 +5,10 @@ import {
   NativeSyntheticEvent,
   TextInputChangeEventData,
   TextInputFocusEventData,
+  Pressable,
 } from "react-native";
 import { mergeRefs } from "@/utils/refs";
-import { InputProps, Input as RNEInput, useTheme } from "@rneui/themed";
+import { Icon, InputProps, Input as RNEInput, useTheme } from "@rneui/themed";
 import React, {
   useState,
   forwardRef,
@@ -142,6 +143,46 @@ export const TextArea = forwardRef<
 });
 
 TextArea.displayName = "TextArea";
+
+export const PasswordInput = forwardRef<
+  React.ElementRef<typeof TextInput>,
+  TextInputP
+>(({ ...props }, ref) => {
+  const { theme } = useTheme();
+  const [hide, setHide] = useState<boolean>(false);
+  return (
+    <Input
+      ref={ref}
+      label="Password"
+      secureTextEntry={!hide}
+      rightIcon={
+        <Pressable
+          style={({pressed}) => ({ opacity: pressed ? 1 : 0.6})}
+          onPress={() => setHide((prev) => !prev)}
+        >
+          {hide ? (
+            <Icon
+              name="visibility-off"
+              color={theme.colors.grey0}
+              style={{ marginRight: 16 }}
+              size={24}
+            />
+          ) : (
+            <Icon
+              name="visibility"
+              color={theme.colors.grey0}
+              style={{ marginRight: 16 }}
+              size={24}
+            />
+          )}
+        </Pressable>
+      }
+      {...props}
+    />
+  );
+});
+
+PasswordInput.displayName = "PasswordInput";
 
 const styles = StyleSheet.create({
   input: {

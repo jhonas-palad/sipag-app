@@ -5,7 +5,7 @@ const SignupStack = () => {
       screenOptions={{ headerTitleAlign: "center", headerTitle: "Signup" }}
     >
       <Stack.Screen
-        name="identity-form"
+        name="index"
         // options={{ headerTitle: "Let's Get Started" }}
       />
       <Stack.Screen name="credentials-form" />

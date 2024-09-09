@@ -3,7 +3,7 @@ import React from "react";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import { Avatar, useTheme, Text, Button } from "@rneui/themed";
-import { usePickImage } from "@/lib/images/pick-image";
+import { usePickImage } from "@/hooks/usePickImage";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "expo-router";
@@ -11,6 +11,7 @@ import { useCreateUser } from "@/data/users";
 import * as zod from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Toast from "react-native-simple-toast";
+import { log } from "@/utils/logger";
 type Props = {};
 const UploadPhotoSchema = zod.object({
   photo: zod
@@ -47,11 +48,15 @@ const UploadPhotoForm = (props: Props) => {
   const router = useRouter();
   const { mutate, status } = useCreateUser({
     async onError(error) {
-      Toast.show(String(error.message), Toast.SHORT);
+      if (error.status === 413) {
+        Toast.show("Image file is to large", Toast.SHORT);
+      } else {
+        Toast.show(String(error.message), Toast.SHORT);
+      }
     },
     onSuccess(data) {
       Toast.show("Account Successfully created!", Toast.SHORT);
-      router.replace("/auth");
+      router.replace("/auth/");
       reset();
     },
   });

@@ -1,4 +1,5 @@
 import { ResponseErrDetails } from "@/types/errors";
+import { err } from "react-native-svg";
 import { string } from "zod";
 export class ResponseError extends Error {
   _body: any;

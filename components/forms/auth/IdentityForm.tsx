@@ -44,7 +44,7 @@ export const IdentityForm = () => {
         first_name: data.first_name,
         last_name: data.last_name,
       });
-      router.push("/auth/(sign-up)/credentials-form");
+      router.push("/auth/sign-up/credentials-form");
     },
     [setFormState, router]
   );

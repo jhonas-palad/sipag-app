@@ -12,7 +12,7 @@ const IdentityFormScreen = (props: Props) => {
         justifyContent: "center",
       }}
     >
-      <View transparent style={{ marginBottom: 12 }}>
+      <View transparent style={{ marginTop: 12, paddingTop: 24 }}>
         <View transparent style={{ marginTop: 12 }}>
           <Text h4 style={{ marginBottom: 16 }}>
             Let's get started

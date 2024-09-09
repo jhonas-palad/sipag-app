@@ -161,12 +161,12 @@ export const WastePostContent = ({
                 }}
               >
                 <Text>Status</Text>
-                <Text style={{ marginBottom: 4, fontWeight: "700" }}>
+                <Text style={{ marginBottom: 16, fontWeight: "700" }}>
                   {wasteReportPost?.status}
                 </Text>
               </View>
               <View style={{ flexDirection: "row", gap: 8 }}>
-                {myPost ? (
+                {myPost && wasteReportPost?.status === "AVAILABLE" ? (
                   <DeleteButton
                     postId={String(wasteReportPost?.id)}
                     onSuccess={handleClose}

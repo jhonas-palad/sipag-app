@@ -1,6 +1,6 @@
 import "react-native-reanimated";
 import { useFonts } from "expo-font";
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useLayoutEffect } from "react";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
@@ -30,7 +30,11 @@ export default function RootLayout() {
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
           <BottomSheetModalProvider>
-            <Slot />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="(onboarding)" />
+              <Stack.Screen name="(protected)" />
+              <Stack.Screen name="auth" />
+            </Stack>
           </BottomSheetModalProvider>
         </ThemeProvider>
       </QueryClientProvider>

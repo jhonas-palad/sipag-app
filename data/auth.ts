@@ -1,4 +1,4 @@
-import { postData } from "@/lib/fetch";
+import { postData, BASE_URL } from "@/lib/fetch";
 import {
   useQuery,
   useMutation,

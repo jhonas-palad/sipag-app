@@ -1,10 +1,6 @@
 import React, { useRef } from "react";
-import { Platform, ActivityIndicator } from "react-native";
-import MapView, {
-  PROVIDER_DEFAULT,
-  PROVIDER_GOOGLE,
-  type MapViewProps,
-} from "react-native-maps";
+import { ActivityIndicator } from "react-native";
+import MapView, { PROVIDER_GOOGLE, type MapViewProps } from "react-native-maps";
 import { createContext, memo, useContext } from "react";
 import { Overlay, Text } from "@rneui/themed";
 export interface MapProviderContextProps {
@@ -29,9 +25,7 @@ export const Maps = memo(
         <MapView
           ref={mapRef}
           showsUserLocation={false}
-          provider={
-            Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-          }
+          provider={PROVIDER_GOOGLE}
           style={[
             {
               width: "100%",

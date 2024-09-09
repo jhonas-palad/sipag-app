@@ -28,7 +28,12 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.paladj28.sipag"
+      "package": "com.paladj28.sipag",
+      "config": {
+        "googleMaps": {
+          "apiKey":"AIzaSyDQPQF5PUiEjJuMA9K2L5zecAUT1aJCQ9g"
+        }
+      }
     },
     "web": {
       "bundler": "metro",

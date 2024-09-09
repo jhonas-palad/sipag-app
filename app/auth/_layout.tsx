@@ -10,7 +10,7 @@ const AuthLayout = () => {
           name="index"
           options={{ headerTitle: "Sign in", headerTitleAlign: "center" }}
         />
-        <Stack.Screen name="(sign-up)" options={{ headerShown: false }} />
+        <Stack.Screen name="sign-up" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaView>
   );

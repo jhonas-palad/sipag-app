@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { View, StyleSheet } from "react-native";
-import { Input } from "@/components/ui/Input";
+import { Input, PasswordInput } from "@/components/ui/Input";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { Link, useRouter } from "expo-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
-import { Icon, useTheme } from "@rneui/themed";
+import { useTheme } from "@rneui/themed";
 import * as Haptics from "expo-haptics";
 import { useShallow } from "zustand/react/shallow";
 import { SiginFormSchema, type SiginFormSchemaType } from "@/schemas/auth";
@@ -149,21 +149,11 @@ export const SigninForm = (props: Props) => {
         render={({ field }) => (
           <FormItem>
             <View style={{ marginBottom: 8 }}>
-              <Input
-                label="Password"
+              <PasswordInput
                 onChangeText={field.onChange}
                 disabled={status === "pending"}
                 placeholder="Enter Your Password"
-                secureTextEntry
                 ErrorComponent={() => <FormMessage></FormMessage>}
-                rightIcon={
-                  <Icon
-                    name="visibility-off"
-                    color={theme.colors.grey1}
-                    style={{ marginRight: 16 }}
-                    size={16}
-                  />
-                }
                 {...field}
               />
             </View>

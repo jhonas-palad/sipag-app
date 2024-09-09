@@ -1,6 +1,6 @@
 import "react-native-reanimated";
 import React, { useRef, useMemo, useCallback, useEffect } from "react";
-import { StyleSheet, ActivityIndicator } from "react-native";
+import { StyleSheet, ActivityIndicator, Pressable } from "react-native";
 import { View } from "@/components/ui/View";
 import { useShallow } from "zustand/react/shallow";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
@@ -22,6 +22,8 @@ import { LinkFAB, FAB } from "@/components/ui/FAB";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import { WASTE_REPORTS } from "@/data/waste-reports";
+import { useNavigation, useRouter } from "expo-router";
+import { theme } from "@/components/theme/theme";
 
 //Currently selected marker details
 export const WastePostsBottomSheet = ({
@@ -169,6 +171,10 @@ const BottomTextWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 const WastePostList = ({ posts }: { posts: WastePost[] }) => {
+  const router = useRouter();
+  const handlePushToCreateWasteReportScreen = useCallback(() => {
+    router.push("/(home)/create-waste-report");
+  }, [router]);
   const renderItemPost = useCallback(
     ({ item }: { item: WastePost }) => <WasteItemPost {...item} />,
     []
@@ -181,10 +187,13 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
           There's no trash in your barangay at the moment. Enjoy the clean
           surroundings and refresh the screen for any updates.
         </Text>
-        <Button title="Post your waste concerns" />
+        <Button
+          title="Post your waste concerns"
+          onPress={handlePushToCreateWasteReportScreen}
+        />
       </BottomTextWrapper>
     ),
-    []
+    [handlePushToCreateWasteReportScreen]
   );
   const renderHeaderComponent = () => (
     <View style={{ paddingTop: 12 }}>
@@ -206,6 +215,7 @@ const WastePostList = ({ posts }: { posts: WastePost[] }) => {
 };
 export const WasteItemPost = (item: WastePost) => {
   const { mapRef } = useMapContext();
+  const { theme } = useTheme();
   const { setContainerState } = useWasteContainerState(
     useShallow((state) => ({
       setContainerState: state.setContainerState,
@@ -221,15 +231,15 @@ export const WasteItemPost = (item: WastePost) => {
   );
   const itemStatus = useCallback(
     (
-      status: "AVAILABLE" | "INPROGRESS" | "DONE"
+      status: "AVAILABLE" | "INPROGRESS" | "FINISHED"
     ): "primary" | "warning" | "success" => {
       switch (status) {
         case "AVAILABLE":
-          return "primary";
+          return "success";
         case "INPROGRESS":
           return "warning";
-        case "DONE":
-          return "success";
+        case "FINISHED":
+          return "primary";
       }
     },
     []
@@ -253,48 +263,67 @@ export const WasteItemPost = (item: WastePost) => {
     setContainerState({ showBtmModal: true });
   };
   return (
-    <ListItem bottomDivider onPress={handleZoomtoMarker}>
-      <Avatar
-        size={32}
-        rounded
-        source={{ uri: item.posted_by.photo?.img_file }}
-      />
-      <ListItem.Content>
-        <ListItem.Title style={{ fontWeight: "bold" }}>
-          {fullName}
-        </ListItem.Title>
-        <View
-          style={{
-            // color: theme.colors.greyOutline,
-            marginBottom: 8,
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-            // backgroundColor: "red",
-          }}
-        >
-          <Text>{createdAt}</Text>
-          <Badge
-            value={item.status}
-            status={itemStatus(
-              item.status as "AVAILABLE" | "INPROGRESS" | "DONE"
-            )}
-            badgeStyle={{
-              marginTop: 4,
-              borderRadius: 50,
-              padding: 4,
-              height: "auto",
+    <Pressable
+      style={({ pressed }) => ({
+        opacity: pressed ? 0.5 : 1,
+      })}
+      onPress={handleZoomtoMarker}
+    >
+      <ListItem
+        bottomDivider
+        containerStyle={{
+          padding: 20,
+          backgroundColor: "transparent",
+        }}
+      >
+        <ListItem.Content style={{ flex: 1, backgroundColor: "transparent" }}>
+          <View
+            transparent
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              marginBottom: 8,
             }}
-          />
-        </View>
+          >
+            <Avatar
+              size={32}
+              rounded
+              source={{ uri: item.posted_by.photo?.img_file }}
+            />
+            <ListItem.Title style={{ fontWeight: "bold" }}>
+              {fullName}
+            </ListItem.Title>
+            <Badge
+              value={item.status}
+              status={itemStatus(
+                item.status as "AVAILABLE" | "INPROGRESS" | "FINISHED"
+              )}
+              badgeStyle={{
+                marginTop: 4,
+                borderRadius: 50,
+                padding: 4,
+                height: "auto",
+              }}
+            />
+          </View>
+          <View transparent style={{ flex: 1 }}>
+            <Text
+              numberOfLines={2}
+              style={{ fontWeight: "bold", fontSize: 18 }}
+            >
+              {item.title}
+            </Text>
 
-        <Text numberOfLines={2} style={{ marginTop: 4 }}>
-          {item.description}
-        </Text>
-      </ListItem.Content>
-      {/* <ListItem.Chevron /> */}
-    </ListItem>
+            <Text numberOfLines={3} style={{ fontSize: 16 }}>
+              {item.description}
+            </Text>
+          </View>
+          <Text style={{ color: theme.colors.grey0 }}>{createdAt}</Text>
+        </ListItem.Content>
+        {/* <ListItem.Chevron /> */}
+      </ListItem>
+    </Pressable>
   );
 };
 

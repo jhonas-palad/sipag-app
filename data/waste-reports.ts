@@ -100,6 +100,9 @@ export const useDeleteWastReport = (
           });
         }
       );
+      queryClient.invalidateQueries({
+        queryKey: [WASTE_REPORT_ACTIVITIES],
+      });
       opts?.onSuccess?.(data, id, context);
     },
   });
@@ -305,6 +308,11 @@ export const useRealTimeWasteReportActivities = () => {
 
   const ws = useWs("waste-report-activities/", {
     onMessage: handleSetQueryData,
+    onError: (e) =>
+      log.error("Failed to connect to waste-report-activites/ ws endpoint"),
+    onOpen(event) {
+      log.info("Connected to waste-report-activities/ ws endpoint");
+    },
   });
   return ws;
 };

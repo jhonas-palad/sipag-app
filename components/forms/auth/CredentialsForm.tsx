@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
 import { View } from "@/components/ui/View";
-import { Input } from "@/components/ui/Input";
+import { Input, PasswordInput } from "@/components/ui/Input";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
 import { Button } from "@/components/ui/Button";
 import { useForm } from "react-hook-form";
@@ -87,7 +87,7 @@ export const CredentialsForm = (props: Props) => {
         ...data,
         password: formValues["password"],
       });
-      router.push("/auth/(sign-up)/upload-image");
+      router.push("/auth/sign-up/upload-image");
     },
   });
 
@@ -156,13 +156,12 @@ export const CredentialsForm = (props: Props) => {
         render={({ field }) => (
           <FormItem>
             <View transparent style={styles.inputContainer}>
-              <Input
-                label="Password"
-                {...field}
+              <PasswordInput
                 onChangeText={field.onChange}
+                disabled={status === "pending"}
                 placeholder="Enter a Password"
-                secureTextEntry
-                ErrorComponent={() => <FormMessage />}
+                ErrorComponent={() => <FormMessage></FormMessage>}
+                {...field}
               />
             </View>
           </FormItem>

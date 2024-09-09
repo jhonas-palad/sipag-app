@@ -5,16 +5,18 @@ import React from "react";
 import { Button } from "@/components/ui/Button";
 import { Link } from "expo-router";
 import AuthScreenContainer from "./AuthScreenContainer";
-
+import { Text } from "@/components/ui/Text";
+import { BASE_URL } from "@/lib/fetch";
 type Props = {};
 
 const LoginScreen = (props: Props) => {
   return (
     <AuthScreenContainer style={{ justifyContent: "space-between" }}>
-      <View transparent style={{ marginTop: 12 }}>
+      <View transparent style={{ marginTop: 12, paddingTop: 24 }}>
         <SigninForm />
+
         <View transparent style={{ paddingTop: 12 }}>
-          <Link href="/auth/(sign-up)" asChild style={{}}>
+          <Link href="/auth/sign-up" asChild style={{}}>
             <Button
               size="lg"
               type="outline"

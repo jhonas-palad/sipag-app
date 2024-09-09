@@ -1,13 +1,18 @@
-import { agetValueSecureStore } from "./secure-store";
+import { agetValueSecureStore } from "./storage/secure-store";
 import { authTokenKey } from "@/store/auth";
 import { ResponseError } from "@/errors/response-error";
 import { SuccessResponseData } from "@/types/response";
 import { Router } from "expo-router";
-export const BASE_URL =
-  process.env.EXPO_PUBLIC_MODE === "development"
-    ? process.env.EXPO_PUBLIC_SIPAG_API_URL
-    : "";
+import { log } from "@/utils/logger";
+export const BASE_URL = !!process.env.EXPO_PUBLIC_API_URL
+  ? process.env.EXPO_PUBLIC_API_URL
+  : process.env.EXPO_PUBLIC_DEV === String(1)
+  ? process.env.EXPO_PUBLIC_API_URL_LOCAL
+  : process.env.EXPO_PUBLIC_API_URL_LIVE;
 
+// export const BASE_URL = "https://sipagapi.online";
+
+log.debug(process.env.EXPO_PUBLIC_DEV, process.env.EXPO_PUBLIC_API_URL);
 export async function fetchData<T extends any>(
   url: string | URL,
   opts?: RequestInit
@@ -18,10 +23,10 @@ export async function fetchData<T extends any>(
   if (!response.ok) {
     badStatus = true;
   }
-
   let data;
   try {
     data = await response.json();
+
     if (badStatus) {
       throw data;
     }

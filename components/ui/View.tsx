@@ -1,9 +1,9 @@
 import { View as RNVIew, ViewProps } from "react-native";
 import { useTheme } from "@rneui/themed";
-import React from "react";
+import React, { ReactElement } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-export const View = ({
+export const ViewC = ({
   transparent = false,
   style,
   ...props
@@ -49,3 +49,31 @@ export const BottomView = ({ style, children, ...props }: ViewProps) => {
     </View>
   );
 };
+
+const withSafeAreaInsets = (
+  withSafeInsets: boolean,
+  Element: (props: ViewProps) => React.JSX.Element
+) => {
+  const Handler = ({ ...props }) => {
+    const insets = useSafeAreaInsets();
+
+    if (!withSafeInsets) {
+      return <Element {...props} />;
+    }
+    return (
+      <Element
+        {...props}
+        style={{
+          marginBottom: insets.bottom + (props?.style?.marginBottom ?? 0),
+          marginTop: insets.top + (props?.style?.marginTop ?? 0),
+          ...props.style,
+        }}
+      />
+    );
+  };
+
+  return Handler;
+};
+
+export const View = withSafeAreaInsets(false, ViewC);
+export const ViewSafe = withSafeAreaInsets(true, ViewC);

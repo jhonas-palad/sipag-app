@@ -6,7 +6,7 @@ import {
   saveSecureStore,
   getValueSecureStore,
   deleteKeySecureStore,
-} from "@/lib/secure-store";
+} from "@/lib/storage/secure-store";
 type AuthSessionState = {
   token: string | null;
   user: User | null;

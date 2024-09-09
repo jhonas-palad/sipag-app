@@ -9,7 +9,7 @@ const CredentialsFormScreen = (props: Props) => {
   return (
     <AuthScreenContainer style={{ justifyContent: "center" }}>
       <View transparent style={{ marginBottom: 12 }}>
-        <View style={{ marginTop: 12 }}>
+        <View transparent style={{ marginTop: 12, paddingTop: 24 }}>
           <Text h4 style={{ marginBottom: 16 }}>
             Create your account
           </Text>

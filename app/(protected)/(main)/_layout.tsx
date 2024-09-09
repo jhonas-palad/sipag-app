@@ -81,16 +81,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 }
 
 const MainLayout = (props: Props) => {
-  const { isError, isPending, error } = useIsValidToken();
-
-  if (isPending) {
-    return <LoadingScreen />;
-  }
-  if (isError) {
-    log.debug("Not Authenticated", error.errors);
-    return <Redirect href="/auth" />;
-  }
-
   return (
     <Drawer
       screenOptions={{ headerShown: false }}

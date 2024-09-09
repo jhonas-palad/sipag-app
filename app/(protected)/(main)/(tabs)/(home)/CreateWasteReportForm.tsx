@@ -10,7 +10,7 @@ import { View } from "@/components/ui/View";
 import { Button } from "@/components/ui/Button";
 import { BottomWrapper } from "@/components/BottomWrapper";
 
-import { usePickImage } from "@/lib/images/pick-image";
+import { usePickImage } from "@/hooks/usePickImage";
 
 import { useLatLngStore } from "@/store/store-latlng";
 
@@ -68,7 +68,6 @@ export const CreateWasteReportForm = () => {
     useCreateReportPost({
       async onError(error, variables, context) {
         let errMsg = "Form is invalid";
-
         if (error instanceof ResponseError) {
           const errors = error.errors;
           log.debug(errors);
@@ -245,9 +244,11 @@ export const CreateWasteReportForm = () => {
       </ScrollView>
       <KeyboardAvoidingView behavior="height">
         <View
+          transparent
           style={{
-            paddingHorizontal: 20,
+            margin: 20,
             justifyContent: "center",
+            alignSelf: "flex-end",
           }}
         >
           <Button
