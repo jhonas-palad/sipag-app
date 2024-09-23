@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import { View } from "@/components/ui/View";
 import { Avatar } from "@rneui/themed";
 import React from "react";
-import { WasteMapView } from "./waste-map";
+import { WasteMapView } from "@/components/waste-reports/waste-map";
 import { DrawerActions, useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthSession } from "@/store/auth";
@@ -21,7 +21,7 @@ const IndexPage = (props: Props) => {
 
   const user = useAuthSession(useShallow((state) => state.user));
 
-  useRealTimeWasteReportActivities();
+  // useRealTimeWasteReportActivities();
   useWasteReportActivitiesPrefetch();
 
   return (

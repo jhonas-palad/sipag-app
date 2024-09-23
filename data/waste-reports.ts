@@ -19,53 +19,99 @@ import { useShallow } from "zustand/react/shallow";
 import { log } from "@/utils/logger";
 import { produce } from "immer";
 import { useWs } from "@/hooks/useWebSocket";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { Router, useRouter } from "expo-router";
+import { minToSec } from "@/lib/util";
 
 const ENDPOINT = "/api/v1/waste-reports/";
 export const WASTE_REPORTS = "WASTE_REPORTS";
 
-type ReturnQueryWasteReport<T> = T extends string
-  ? UseQueryResult<WastePost, ResponseError>
-  : UseQueryResult<WastePost[], ResponseError>;
-
-type ReturnDataWasteReport<T> = T extends string ? WastePost : WastePost[];
-export const useWasteReportPosts = <T extends string | null>(
-  id: T,
+export const useGetAllWasteReports = (
   opts?: Omit<
     UseQueryOptions<
-      SuccessResponseData<ReturnDataWasteReport<T>>,
+      SuccessResponseData<WastePost[]>,
       ResponseError,
-      ReturnDataWasteReport<T>
+      WastePost[]
     >,
     "queryKey" | "queryFn" | "select"
   >
-): ReturnQueryWasteReport<T> => {
-  log.debug(
-    id === null ? "Fetching waste reports." : `Fetching waste report id : ${id}`
-  );
-  const url = id !== null ? ENDPOINT + String(id) : ENDPOINT;
+) => {
+  const url = ENDPOINT;
   const token = useAuthSession(useShallow((state) => state.token));
   const router = useRouter();
-  const queryKey = [WASTE_REPORTS];
-  if (id) {
-    queryKey.push(id as string);
-  }
-  return useQuery<
-    SuccessResponseData<ReturnDataWasteReport<T>>,
-    ResponseError,
-    ReturnDataWasteReport<T>
-  >({
-    queryKey,
+  return useQuery<SuccessResponseData<WastePost[]>, ResponseError, WastePost[]>(
+    {
+      queryKey: [WASTE_REPORTS],
+      async queryFn() {
+        return (await getDataRedirect(url, token, {}, router)) as any;
+      },
+      select(data) {
+        return data.data as WastePost[];
+      },
+      refetchInterval: minToSec(5),
+      ...opts,
+
+    }
+  ) as any;
+};
+export const useGetWasteReportPostDetail = (
+  id: string,
+  opts?: Omit<
+    UseQueryOptions<
+      SuccessResponseData<WastePost[]>,
+      ResponseError,
+      WastePost[]
+    >,
+    "queryKey" | "queryFn" | "select"
+  >
+) => {
+  const url = ENDPOINT + String(id);
+  const token = useAuthSession(useShallow((state) => state.token));
+
+  const router = useRouter();
+  const q = useQuery<SuccessResponseData<WastePost>, ResponseError, WastePost>({
+    queryKey: [WASTE_REPORTS + id],
     async queryFn() {
       return (await getDataRedirect(url, token, {}, router)) as any;
     },
     select(data) {
-      return data.data as ReturnDataWasteReport<T>;
+      return data.data as WastePost;
     },
+    // refetchInterval: minToSec(1),
     ...opts,
   }) as any;
+
+  return q;
 };
+
+// const useUpdateWasteReportFromCache = (id: string | null, data: WastePost) => {
+//   const queryClient = useQueryClient();
+
+//   useEffect(() => {
+//     if (!id || !data) {
+//       return;
+//     }
+//     console.log("WEQWE");
+//     queryClient.setQueryData(
+//       [WASTE_REPORTS],
+//       (cachedValue: SuccessResponseData<WastePost[]>) => {
+//         return produce(cachedValue, (draft) => {
+//           if (draft) {
+//             return;
+//           }
+//           const index = (
+//             draft as SuccessResponseData<WastePost[]>
+//           ).data.findIndex((wastePost: WastePost) => +wastePost.id === +id);
+//           if (index === -1) {
+//             return;
+//           }
+//           // console.log('qqweqweqweqweqw',draft.data[index], data?.status);
+//           (draft as SuccessResponseData<WastePost[]>).data[index] = data;
+//         });
+//       }
+//     );
+//   }, [id, data, queryClient]);
+// };
 
 export const useDeleteWastReport = (
   opts?: UseMutationOptions<SuccessResponseData<unknown>, ResponseError, string>
@@ -115,6 +161,7 @@ export const useCreateReportPost = (
     WasteReportSchemaT
   >
 ) => {
+  const queryClient = useQueryClient();
   const token = useAuthSession(useShallow((state) => state.token));
   const router = useRouter();
   return useMutation<
@@ -150,14 +197,14 @@ export const useCreateReportPost = (
     },
     ...opts,
     async onSuccess(data, variables, context) {
-      // queryClient.setQueryData(
-      //   [WASTE_REPORTS],
-      //   (oldResponse: SuccessResponseData<WastePost[]>) => {
-      //     return produce(oldResponse, (draftResponse) => {
-      //       draftResponse.data = [data.data, ...draftResponse.data];
-      //     });
-      //   }
-      // );
+      queryClient.setQueryData(
+        [WASTE_REPORTS],
+        (oldResponse: SuccessResponseData<WastePost[]>) => {
+          return produce(oldResponse, (draftResponse) => {
+            draftResponse.data = [data.data, ...draftResponse.data];
+          });
+        }
+      );
       await opts?.onSuccess?.(data, variables, context);
     },
   });
@@ -202,8 +249,11 @@ export const useWasteReportActions = (
       )) as SuccessResponseData<WastePost>;
     },
     async onSuccess(data, variables, context) {
+      queryClient.invalidateQueries({
+        queryKey: [WASTE_REPORTS],
+      });
       queryClient.setQueryData(
-        [WASTE_REPORTS, id],
+        [WASTE_REPORTS + id],
         (oldState: SuccessResponseData<WastePost>) => {
           return produce(oldState, (draftState) => {
             draftState.data = data.data.result;

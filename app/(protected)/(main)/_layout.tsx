@@ -6,13 +6,9 @@ import {
 } from "@react-navigation/drawer";
 import { View } from "@/components/ui/View";
 import { Text, Avatar, Icon, useTheme } from "@rneui/themed";
-import { Redirect } from "expo-router";
 import { useAuthSession } from "@/store/auth";
-import { useIsValidToken } from "@/data/auth";
 import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "expo-router";
-import { LoadingScreen } from "@/components/LoadingScreen";
-import { log } from "@/utils/logger";
 import { Image } from "expo-image";
 type Props = {};
 

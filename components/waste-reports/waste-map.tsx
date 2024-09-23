@@ -14,7 +14,7 @@ import {
 } from "@/store/waste-report";
 import { WastePostsBottomSheet } from "./waste-posts";
 import { useTheme, Icon } from "@rneui/themed";
-import { useWasteReportPosts } from "@/data/waste-reports";
+import { useGetAllWasteReports } from "@/data/waste-reports";
 import { WastePostContent } from "./WastePostContents";
 import { GarbageSVG } from "@/components/svg/garbage";
 import { useShallow } from "zustand/react/shallow";
@@ -26,7 +26,7 @@ export const WasteMapView = () => {
     isFetching,
     isLoading,
     isError,
-  } = useWasteReportPosts(null);
+  } = useGetAllWasteReports();
   const { selectedPost } = useWasteReportStore(
     useShallow((state) => ({
       selectedPost: state.selectedPost,
@@ -49,7 +49,6 @@ export const WasteMapView = () => {
       zoomControlEnabled={false}
       toolbarEnabled={false}
       loadingEnabled
-      // loading={isFetching || isLoading}
       loadingIndicatorColor={theme.colors.primary}
       initialRegion={barangaySalaGeoPoints}
       overlayChildren={

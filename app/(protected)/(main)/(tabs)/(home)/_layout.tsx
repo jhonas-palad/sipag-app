@@ -29,6 +29,13 @@ const HomeTabLayout = () => {
             title: "Create Waste Report",
           }}
         />
+        <Stack.Screen
+          name="finished-task"
+          options={{
+            headerShown: false,
+            headerShadowVisible: false,
+          }}
+        />
       </Stack>
     </>
   );

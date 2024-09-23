@@ -11,6 +11,7 @@ const AuthLayout = () => {
           options={{ headerTitle: "Sign in", headerTitleAlign: "center" }}
         />
         <Stack.Screen name="sign-up" options={{ headerShown: false }} />
+        <Stack.Screen name="not-verified" options={{ headerShown: false }} />
       </Stack>
     </SafeAreaView>
   );

@@ -7,6 +7,7 @@ import {
   getValueSecureStore,
   deleteKeySecureStore,
 } from "@/lib/storage/secure-store";
+import { log } from "@/utils/logger";
 type AuthSessionState = {
   token: string | null;
   user: User | null;
@@ -15,7 +16,7 @@ type AuthSessionState = {
 type AuthSessionAction = {
   setToken: (token: string) => void;
   setUser: (details: User) => void;
-  isAuthenticated: () => boolean;
+  getStoreAuth: () => boolean;
   signOut: () => void;
 };
 
@@ -26,9 +27,9 @@ export const useAuthSession = create<AuthSessionState & AuthSessionAction>()(
   immer((set, get) => ({
     user: null,
     token: null,
-    isAuthenticated() {
+    getStoreAuth() {
       let { token, user, setToken, setUser } = get();
-
+      log.debug("Checking user if authenticated");
       if (!token) {
         token = getValueSecureStore(authTokenKey) as string | null;
         token && setToken(token!);

@@ -40,7 +40,7 @@ export async function fetchData<T extends any>(
   return {
     data,
     status: response.status,
-  };
+  } as SuccessResponseData<T>;
 }
 
 export async function postData<T>(
@@ -59,13 +59,13 @@ export async function postData<T>(
   return await fetchData<T>(url, init);
 }
 
-export async function getData(
+export async function getData<T>(
   url: string | URL,
   token: string | null = null,
   opts: RequestInit = {}
 ) {
   let init = { ...(await initAuth(token)), ...opts };
-  return await fetchData(url, init);
+  return await fetchData<T>(url, init);
 }
 
 export const fetchRedirectWrapper =

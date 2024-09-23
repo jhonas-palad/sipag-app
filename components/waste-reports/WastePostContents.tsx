@@ -15,7 +15,7 @@ import { WastePost } from "@/types/maps";
 import {
   useDeleteWastReport,
   useWasteReportActions,
-  useWasteReportPosts,
+  useGetWasteReportPostDetail,
 } from "@/data/waste-reports";
 import { BottomView } from "@/components/ui/View";
 import { BottomModalSheet } from "@/components/ui/ModalSheet";
@@ -29,6 +29,7 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuthSession } from "@/store/auth";
 import Toast from "react-native-simple-toast";
 import { log } from "@/utils/logger";
+import { useRouter } from "expo-router";
 
 const BOTTOM_SHEET_NAME = "waste-post-detail";
 export const WastePostContent = ({
@@ -48,8 +49,14 @@ export const WastePostContent = ({
     isLoading,
     isError,
     error,
-  } = useWasteReportPosts(selectedPost);
+  } = useGetWasteReportPostDetail(selectedPost);
 
+  // useEffect(() => {
+  //   if (isError) {
+  //     return;
+  //   }
+
+  // }, [wasteReportPost, isError]);
   const myPost = useMemo(() => {
     return user?.id === wasteReportPost?.posted_by.id;
   }, [user, wasteReportPost]);
@@ -68,6 +75,7 @@ export const WastePostContent = ({
       400
     );
   }, [mapRef, selectPost]);
+
   return (
     <>
       {showBack && <WasteContentFAB onClose={handleClose} />}
@@ -179,6 +187,7 @@ export const WastePostContent = ({
                 ) : wasteReportPost?.status === "INPROGRESS" &&
                   String(wasteReportPost?.cleaner?.id) === String(user?.id) ? (
                   <InProgressButton
+                    closeBottomSheet={handleClose}
                     postId={String(wasteReportPost?.id)}
                     status={wasteReportPost?.status as string}
                     cleanerId={String(wasteReportPost?.cleaner?.id)}
@@ -261,20 +270,35 @@ const InProgressButton = ({
   postId,
   status,
   cleanerId,
+  closeBottomSheet,
 }: {
   postId: string;
   status: string;
   cleanerId: string;
+  closeBottomSheet: () => void;
 }) => {
+  const router = useRouter();
   const { mutate, isPending } = useWasteReportActions(postId, {
     mutationKey: [status],
     async onSuccess(data, variables) {
+      if (variables.action === "done") {
+        closeBottomSheet();
+        router.push("/(home)/finished-task");
+      }
       Toast.show(
         `Task ${variables.action === "done" ? "completed" : "cancelled"}.`,
         Toast.LONG
       );
     },
     onError(error) {
+      if (typeof error.errors === "object") {
+        if (error.errors?.count) {
+          Toast.show(
+            "Already reached the maximum points, redeem it first to reset the count",
+            Toast.SHORT
+          );
+        }
+      }
       log.error(error.errors);
     },
   });

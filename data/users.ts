@@ -1,10 +1,18 @@
 import { User } from "@/types/user";
-import { postData } from "@/lib/fetch";
-import { useMutation, UseMutationOptions } from "@tanstack/react-query";
+import { getData, postData } from "@/lib/fetch";
+import {
+  useMutation,
+  UseMutationOptions,
+  useQuery,
+} from "@tanstack/react-query";
 import { type ImagePickerAsset } from "expo-image-picker";
 import { ResponseError } from "@/errors/response-error";
 import { SignupSchemaAllOptionalType } from "@/schemas/auth";
+
 import FormData from "form-data";
+import { KEYWORDS } from "@/lib/constants";
+import { useAuthSession } from "@/store/auth";
+import { useShallow } from "zustand/react/shallow";
 
 export type UploadPhotoParams = {
   id: User["id"];

@@ -10,7 +10,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient({});
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // staleTime: msToSeconds(10),
+      // refetchInterval: msToSeconds(10),
+      refetchIntervalInBackground: true,
+    },
+  },
+});
 
 export default function RootLayout() {
   const [loaded] = useFonts({

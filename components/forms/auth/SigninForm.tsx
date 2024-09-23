@@ -18,6 +18,8 @@ import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
 import { useAuthSession } from "@/store/auth";
 import { log } from "@/utils/logger";
 import { ResponseError } from "@/errors/response-error";
+import { useQueryClient } from "@tanstack/react-query";
+import { KEYWORDS } from "@/lib/constants";
 type Props = {};
 
 export const SigninForm = (props: Props) => {
@@ -39,7 +41,7 @@ export const SigninForm = (props: Props) => {
       password: "",
     },
   });
-
+  const queryClient = useQueryClient();
   const { mutateAsync, status } = useSigninUser({
     async onError(error, variables, context) {
       let errMsg = "Sign in failed";
@@ -74,8 +76,15 @@ export const SigninForm = (props: Props) => {
       const { data: responseData } = data;
       try {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        queryClient.setQueryData([KEYWORDS.USER_DETAIL], () => {
+          return responseData.user;
+        });
         session.setToken(responseData.token);
+
         session.setUser(responseData.user);
+        if (!responseData.user.is_verified) {
+          router.replace("/auth/not-verified");
+        }
         router.replace("/");
         log.debug("Navigating to home screen");
       } catch (err) {

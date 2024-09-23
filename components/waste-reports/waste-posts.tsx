@@ -4,7 +4,7 @@ import { StyleSheet, ActivityIndicator, Pressable } from "react-native";
 import { View } from "@/components/ui/View";
 import { useShallow } from "zustand/react/shallow";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
-import { Text, ListItem, useTheme, Avatar } from "@rneui/themed";
+import { Badge, Text, useTheme } from "@rneui/themed";
 import { Button } from "@/components/ui/Button";
 import BottomSheet, {
   BottomSheetFlatList,
@@ -15,15 +15,13 @@ import {
   useWasteContainerState,
   useWasteReportStore,
 } from "@/store/waste-report";
+import { Image } from "expo-image";
 import { useMapContext } from "@/components/Maps";
-import { Badge } from "@rneui/base";
 import { WastePost } from "@/types/maps";
-import { LinkFAB, FAB } from "@/components/ui/FAB";
 import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
-import { WASTE_REPORTS } from "@/data/waste-reports";
-import { useNavigation, useRouter } from "expo-router";
-import { theme } from "@/components/theme/theme";
+import { useRouter } from "expo-router";
+import BottomSheetHandleComponent from "@/components/waste-reports/bottom-sheet-handle-component";
 
 //Currently selected marker details
 export const WastePostsBottomSheet = ({
@@ -50,9 +48,6 @@ export const WastePostsBottomSheet = ({
     selectedPost && bottomSheetRef.current?.snapToIndex(0);
   }, [selectedPost]);
 
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: [WASTE_REPORTS] });
-  }, [queryClient]);
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -78,57 +73,7 @@ export const WastePostsBottomSheet = ({
           backgroundColor: "transparent",
           borderRadius: 32,
         }}
-        handleComponent={() => (
-          <>
-            <View
-              style={{
-                position: "absolute",
-                top: -50,
-                backgroundColor: "transparent",
-                width: "100%",
-              }}
-            >
-              <View
-                transparent
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "flex-end",
-                  alignItems: "center",
-                  gap: 12,
-                  marginHorizontal: 20,
-                }}
-              >
-                <LinkFAB
-                  href={"/create-waste-report"}
-                  icon={{ name: "add" }}
-                  size="small"
-                />
-
-                <FAB
-                  icon={{ name: "sync" }}
-                  size="small"
-                  onPress={handleRefresh}
-                />
-              </View>
-            </View>
-            <View
-              style={{
-                paddingVertical: 12,
-                alignItems: "center",
-                borderRadius: 50,
-              }}
-            >
-              <View
-                style={{
-                  backgroundColor: theme.colors.grey3,
-                  borderRadius: 50,
-                  width: 30,
-                  height: 4,
-                }}
-              />
-            </View>
-          </>
-        )}
+        handleComponent={() => <BottomSheetHandleComponent />}
         handleIndicatorStyle={{
           backgroundColor: theme.colors.greyOutline,
           height: 3.5,
@@ -229,25 +174,17 @@ export const WasteItemPost = (item: WastePost) => {
     }),
     [item.location]
   );
-  const itemStatus = useCallback(
-    (
-      status: "AVAILABLE" | "INPROGRESS" | "FINISHED"
-    ): "primary" | "warning" | "success" => {
-      switch (status) {
-        case "AVAILABLE":
-          return "success";
-        case "INPROGRESS":
-          return "warning";
-        case "FINISHED":
-          return "primary";
-      }
-    },
-    []
-  );
+  const statusColor = useMemo(() => {
+    switch (item.status) {
+      case "AVAILABLE":
+        return theme.colors.success;
+      case "INPROGRESS":
+        return theme.colors.warning;
+      case "CLEARED":
+        return theme.colors.primary;
+    }
+  }, [item.status, theme]);
 
-  const fullName = useMemo(() => {
-    return `${item.posted_by.first_name} ${item.posted_by.last_name}`;
-  }, [item.posted_by.first_name, item.posted_by.last_name]);
   const createdAt = useMemo(() => {
     return format(new Date(item.created_at), "MMM dd, yyyy");
   }, [item.created_at]);
@@ -269,60 +206,55 @@ export const WasteItemPost = (item: WastePost) => {
       })}
       onPress={handleZoomtoMarker}
     >
-      <ListItem
-        bottomDivider
-        containerStyle={{
-          padding: 20,
-          backgroundColor: "transparent",
+      <View
+        style={{
+          flexDirection: "row",
+          marginVertical: 12,
+          marginHorizontal: 16,
         }}
       >
-        <ListItem.Content style={{ flex: 1, backgroundColor: "transparent" }}>
-          <View
-            transparent
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 8,
+        <View>
+          <Image
+            style={{ height: 100, width: 100 }}
+            source={item.thumbnail.img_file}
+            placeholder={item.thumbnail.hash}
+          />
+        </View>
+        <View
+          style={{
+            marginLeft: 12,
+            flexDirection: "column",
+            flex: 1,
+          }}
+        >
+          <Badge
+            value={item.status}
+            badgeStyle={{
+              backgroundColor: "transparent",
+              width: "auto",
+              alignSelf: "flex-start",
             }}
+            textStyle={{
+              color: statusColor,
+              fontWeight: "bold",
+              margin: 0,
+              paddingHorizontal: 0,
+            }}
+          />
+          <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: "bold" }}>
+            {item.title}
+          </Text>
+          <Text numberOfLines={1} style={{ fontSize: 16 }}>
+            {item.description}
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={{ fontSize: 15, color: theme.colors.grey0 }}
           >
-            <Avatar
-              size={32}
-              rounded
-              source={{ uri: item.posted_by.photo?.img_file }}
-            />
-            <ListItem.Title style={{ fontWeight: "bold" }}>
-              {fullName}
-            </ListItem.Title>
-            <Badge
-              value={item.status}
-              status={itemStatus(
-                item.status as "AVAILABLE" | "INPROGRESS" | "FINISHED"
-              )}
-              badgeStyle={{
-                marginTop: 4,
-                borderRadius: 50,
-                padding: 4,
-                height: "auto",
-              }}
-            />
-          </View>
-          <View transparent style={{ flex: 1 }}>
-            <Text
-              numberOfLines={2}
-              style={{ fontWeight: "bold", fontSize: 18 }}
-            >
-              {item.title}
-            </Text>
-
-            <Text numberOfLines={3} style={{ fontSize: 16 }}>
-              {item.description}
-            </Text>
-          </View>
-          <Text style={{ color: theme.colors.grey0 }}>{createdAt}</Text>
-        </ListItem.Content>
-        {/* <ListItem.Chevron /> */}
-      </ListItem>
+            {createdAt}
+          </Text>
+        </View>
+      </View>
     </Pressable>
   );
 };

@@ -1,8 +1,9 @@
-import { postData, BASE_URL } from "@/lib/fetch";
+import { postData, BASE_URL, getData } from "@/lib/fetch";
 import {
   useQuery,
   useMutation,
   UseMutationOptions,
+  useQueries,
 } from "@tanstack/react-query";
 import { SignupSchema, type SiginFormSchemaType } from "@/schemas/auth";
 import { UserDetailsType } from "@/schemas/users";
@@ -13,6 +14,8 @@ import * as zod from "zod";
 import { authTokenKey, useAuthSession } from "@/store/auth";
 import { useShallow } from "zustand/react/shallow";
 import { log } from "@/utils/logger";
+import { KEYWORDS } from "@/lib/constants";
+import { minToSec } from "@/lib/util";
 export const AUTH_USER = "AUTH_USER";
 
 export type AuthTokenResponse = SuccessResponseData<User & { token: string }>;
@@ -79,27 +82,53 @@ export function useValidateCredentials(
   return resultMutation;
 }
 
-export function useIsValidToken() {
-  log.debug("Checking user if authenticated");
-  const { isAuthenticated, token } = useAuthSession(
+export function useVerifiedUser() {
+  const { getStoreAuth, token, user } = useAuthSession(
     useShallow((state) => ({
       token: state.token,
-      isAuthenticated: state.isAuthenticated,
+      getStoreAuth: state.getStoreAuth,
+      user: state.user,
     }))
   );
-  const resultMutation = useQuery<SuccessResponseData<any>, ResponseError>({
-    queryKey: [authTokenKey],
-    async queryFn() {
-      if (isAuthenticated()) {
-        log.debug("Verifying token");
-        return await postData("/api/v1/auth/verify", null, {
-          body: JSON.stringify({
-            token: token!,
-          }),
-        });
-      }
-      throw Error("No token found");
-    },
+  const query = useQueries({
+    queries: [
+      {
+        queryKey: [authTokenKey],
+        async queryFn() {
+          if (getStoreAuth()) {
+            log.debug("Verifying token");
+
+            const result = await postData("/api/v1/auth/verify", null, {
+              body: JSON.stringify({
+                token: token!,
+              }),
+            });
+            // return await postData("/api/v1/auth/verify", null, {
+            //   body: JSON.stringify({
+            //     token: token!,
+            //   }),
+            // });
+            return result;
+          }
+          throw Error(KEYWORDS.NO_TOKEN_FOUND);
+        },
+        refetchInterval: minToSec(10),
+      },
+      {
+        queryKey: [KEYWORDS.USER_DETAIL],
+        async queryFn() {
+          const { data } = await getData<User>(
+            "/api/v1/users/" + user?.id,
+            token
+          );
+          if (!data.is_verified) {
+            throw Error(KEYWORDS.NOT_VERIFIED_USER);
+          }
+          return data;
+        },
+      },
+    ],
   });
-  return resultMutation;
+
+  return query;
 }
