@@ -1,37 +1,55 @@
-import { useCallback, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
 import { useShallow } from "zustand/react/shallow";
-import { useTheme } from "@rneui/themed";
+import { Badge, Icon, useTheme } from "@rneui/themed";
 import {
   BottomSheetModal,
   BottomSheetScrollView,
   BottomSheetView,
+  BottomSheetFooter,
+  BottomSheetFooterProps,
 } from "@gorhom/bottom-sheet";
 import { View } from "@/components/ui/View";
 import { Image } from "expo-image";
-import { Text, Avatar, Icon } from "@rneui/themed";
-import { LinearGradient } from "expo-linear-gradient";
-import { ListItem } from "@rneui/themed";
-import { WastePost } from "@/types/maps";
+import { Text } from "@rneui/themed";
 import {
   useDeleteWastReport,
   useWasteReportActions,
   useGetWasteReportPostDetail,
+  WASTE_REPORTS,
 } from "@/data/waste-reports";
-import { BottomView } from "@/components/ui/View";
-import { BottomModalSheet } from "@/components/ui/ModalSheet";
-import { useRef } from "react";
+
 import { useWasteReportStore } from "@/store/waste-report";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useMapContext } from "@/components/Maps";
 import { FAB } from "@/components/ui/FAB";
 import { Button } from "@/components/ui/Button";
-import { LoadingScreen } from "@/components/LoadingScreen";
 import { useAuthSession } from "@/store/auth";
 import Toast from "react-native-simple-toast";
 import { log } from "@/utils/logger";
 import { useRouter } from "expo-router";
+import { ErrorBottomSheetView } from "../bottom-sheet/ErrorBottomSheetView";
+import { ActivityIndicator, StyleSheet } from "react-native";
+import { UserProfileBox } from "./UserProfileBox";
+import { formatPPpp } from "@/lib/date";
 
 const BOTTOM_SHEET_NAME = "waste-post-detail";
+
+type WastePostDetailContextT = {
+  close: () => void;
+  sheetRef: React.Ref<BottomSheetModal>;
+};
+
+const WastePostDetailContext = createContext<WastePostDetailContextT | null>(
+  null
+);
 export const WastePostContent = ({
   selectedPost,
 }: {
@@ -39,7 +57,7 @@ export const WastePostContent = ({
 }) => {
   const modalRef = useRef<BottomSheetModal>(null);
   const [showBack, setShowBack] = useState(true);
-
+  const { theme } = useTheme();
   const { mapRef } = useMapContext();
   const selectPost = useWasteReportStore((state) => state.selectPost);
   const user = useAuthSession(useShallow((state) => state.user));
@@ -51,12 +69,12 @@ export const WastePostContent = ({
     error,
   } = useGetWasteReportPostDetail(selectedPost);
 
-  // useEffect(() => {
-  //   if (isError) {
-  //     return;
-  //   }
+  useEffect(() => {
+    if (selectedPost) {
+      modalRef.current?.present();
+    }
+  }, [selectedPost]);
 
-  // }, [wasteReportPost, isError]);
   const myPost = useMemo(() => {
     return user?.id === wasteReportPost?.posted_by.id;
   }, [user, wasteReportPost]);
@@ -65,172 +83,224 @@ export const WastePostContent = ({
     modalRef.current?.close();
     setShowBack(false);
     selectPost(null);
-    mapRef.current?.animateToRegion(
-      {
-        latitude: 14.100202432834427,
-        latitudeDelta: 0.03370272545660313,
-        longitude: 121.11851876601577,
-        longitudeDelta: 0.016310177743420695,
-      },
-      400
+  }, [selectPost]);
+
+  const renderFooter = (props: BottomSheetFooterProps) => {
+    return (
+      <BottomSheetFooter
+        {...props}
+        style={{
+          paddingVertical: 8,
+          paddingHorizontal: 20,
+          backgroundColor: theme.colors.white,
+          // backgroundColor: "transparent",
+          elevation: 10,
+        }}
+      >
+        <View
+          transparent
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
+          <Text>Status</Text>
+          <Text style={{ fontWeight: "700" }}>{wasteReportPost?.status}</Text>
+        </View>
+        <View transparent style={{ flexDirection: "row", gap: 8 }}>
+          {myPost && wasteReportPost?.status === "AVAILABLE" ? (
+            <DeleteButton
+              postId={String(wasteReportPost?.id)}
+              closeBottomSheet={handleClose}
+            />
+          ) : wasteReportPost?.status === "AVAILABLE" ? (
+            <AvailableInProgButton
+              postId={String(wasteReportPost?.id)}
+              status={wasteReportPost?.status as string}
+            />
+          ) : wasteReportPost?.status === "INPROGRESS" &&
+            String(wasteReportPost?.cleaner?.id) === String(user?.id) ? (
+            <InProgressButton
+              closeBottomSheet={handleClose}
+              postId={String(wasteReportPost?.id)}
+              status={wasteReportPost?.status as string}
+              cleanerId={String(wasteReportPost?.cleaner?.id)}
+            />
+          ) : null}
+        </View>
+      </BottomSheetFooter>
     );
-  }, [mapRef, selectPost]);
+  };
 
   return (
-    <>
-      {showBack && <WasteContentFAB onClose={handleClose} />}
+    <WastePostDetailContext.Provider
+      value={{ close: handleClose, sheetRef: modalRef }}
+    >
+      {showBack && <WasteContentFAB />}
 
-      <BottomModalSheet
+      <BottomSheetModal
         key={BOTTOM_SHEET_NAME}
         name={BOTTOM_SHEET_NAME}
         enablePanDownToClose={false}
-        open
+        footerComponent={(props) => renderFooter(props)}
+        animateOnMount
+        enableDismissOnClose
+        onDismiss={() => {
+          setShowBack(false);
+          selectPost(null);
+        }}
         ref={modalRef}
-        snapPoints={["60%", "80%"]}
+        snapPoints={["60%", "80%", "100%"]}
       >
         {isError ? (
-          <BottomSheetView>
-            <View>
-              <Text>Something went wrong. Details: {error.message}</Text>
+          <ErrorBottomSheetView queryKey={[WASTE_REPORTS + selectedPost]}>
+            <View
+              transparent
+              style={{
+                paddingTop: 128,
+                paddingHorizontal: 32,
+              }}
+            >
+              <Text h4 style={{ textAlign: "center", marginBottom: 4 }}>
+                Something went wrong.
+              </Text>
+              <Text style={{ textAlign: "center" }}>
+                Details: {error.message}
+              </Text>
             </View>
-          </BottomSheetView>
+          </ErrorBottomSheetView>
         ) : isFetching || isLoading ? (
-          <LoadingScreen />
+          // <LoadingScreen />
+          <BottomSheetView
+            style={{
+              flex: 1,
+              paddingTop: 128 * 2,
+              paddingHorizontal: 32,
+              justifyContent: "flex-start",
+            }}
+          >
+            <ActivityIndicator />
+          </BottomSheetView>
         ) : (
           <>
             <BottomSheetScrollView>
               <View
+                transparent
                 style={{
                   paddingTop: 16,
-                  paddingBottom: 100,
-                  justifyContent: "center",
-                  alignItems: "center",
+                  paddingHorizontal: 16,
+                  paddingBottom: 120,
+                  // justifyContent: "center",
+                  // alignItems: "center",
                 }}
               >
-                <ImageGradientUser {...wasteReportPost!} />
-
-                <View style={[{ gap: 16 }]}>
-                  <LabelledContent
-                    iconName="location-pin"
-                    content={`${wasteReportPost?.location.lng}, ${wasteReportPost?.location.lat}`}
-                    label="Location"
+                <UserProfileBox profile={wasteReportPost?.posted_by} />
+                <View
+                  transparent
+                  style={{
+                    width: "100%",
+                    height: 250,
+                    marginBotton: 12,
+                    // paddingHorizontal: 12,
+                  }}
+                >
+                  <Image
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: theme.spacing.lg,
+                    }}
+                    source={wasteReportPost?.thumbnail.img_file}
+                    placeholder={wasteReportPost?.thumbnail.placeholder}
                   />
-                  <LabelledContent
-                    iconName="description"
-                    label="Description"
-                    content={
-                      wasteReportPost?.description
-                        ? wasteReportPost.description
-                        : "No description provided"
-                    }
-                  />
-
-                  <LabelledContent
-                    label="Phone number"
-                    iconName="call"
-                    content={
-                      wasteReportPost?.posted_by?.phone_number
-                        ? wasteReportPost.posted_by.phone_number
-                        : "None"
-                    }
-                  />
-                  <LabelledContent
-                    iconName="mail"
-                    content={
-                      wasteReportPost?.posted_by.email
-                        ? wasteReportPost.posted_by.email
-                        : "None"
-                    }
-                    label="Email"
-                  />
-                  {wasteReportPost?.cleaner && (
-                    <LabelledContent
-                      iconName="mail"
-                      content={`
-                      ${wasteReportPost.cleaner.id} ${
-                        wasteReportPost.cleaner.first_name ?? "No firstname"
-                      } ${wasteReportPost.cleaner.last_name ?? "No lastname"}`}
-                      label={
-                        wasteReportPost?.status === "INPROGRESS"
-                          ? "Accepted by"
-                          : "Cleared by"
-                      }
-                    />
-                  )}
                 </View>
+
+                <View transparent style={[{ gap: 16, marginTop: 24 }]}>
+                  <Text
+                    style={{
+                      fontSize: 24,
+                      fontWeight: "bold",
+                      color: theme.colors.black,
+                    }}
+                  >
+                    {wasteReportPost?.title}
+                  </Text>
+                  <Text style={{ fontSize: 18 }}>
+                    {wasteReportPost?.description}
+                  </Text>
+                  <Text>{formatPPpp(wasteReportPost.created_at)}</Text>
+                </View>
+                {wasteReportPost?.cleaner && (
+                  <View
+                    style={{
+                      borderRadius: 12,
+                      elevated: 12,
+                      borderWidth: 0.5,
+                      borderColor: theme.colors.grey1,
+                      padding: 12,
+                      marginTop: 12,
+                    }}
+                  >
+                    <Badge
+                      containerStyle={{
+                        position: "absolute",
+                        right: 5,
+                        top: 5,
+                      }}
+                      value="Cleaner"
+                    />
+                    <UserProfileBox profile={wasteReportPost?.cleaner} />
+                    <View style={{ marginLeft: 12 }}>
+                      {wasteReportPost?.accepted_at && (
+                        <View style={[styles.row, { marginBottom: 8 }]}>
+                          <Icon
+                            name="schedule"
+                            size={24}
+                            color={theme.colors.warning}
+                          />
+                          <Text>
+                            {formatPPpp(wasteReportPost?.accepted_at)}
+                          </Text>
+                        </View>
+                      )}
+                      {wasteReportPost?.completed_at && (
+                        <View style={styles.row}>
+                          <Icon
+                            name="done-all"
+                            size={24}
+                            color={theme.colors.success}
+                          />
+                          <Text>
+                            {formatPPpp(wasteReportPost?.completed_at)}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                )}
               </View>
             </BottomSheetScrollView>
-            <BottomView>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  paddingHorizontal: 4,
-                }}
-              >
-                <Text>Status</Text>
-                <Text style={{ marginBottom: 16, fontWeight: "700" }}>
-                  {wasteReportPost?.status}
-                </Text>
-              </View>
-              <View style={{ flexDirection: "row", gap: 8 }}>
-                {myPost && wasteReportPost?.status === "AVAILABLE" ? (
-                  <DeleteButton
-                    postId={String(wasteReportPost?.id)}
-                    onSuccess={handleClose}
-                  />
-                ) : wasteReportPost?.status === "AVAILABLE" ? (
-                  <AvailableInProgButton
-                    postId={String(wasteReportPost?.id)}
-                    status={wasteReportPost?.status as string}
-                  />
-                ) : wasteReportPost?.status === "INPROGRESS" &&
-                  String(wasteReportPost?.cleaner?.id) === String(user?.id) ? (
-                  <InProgressButton
-                    closeBottomSheet={handleClose}
-                    postId={String(wasteReportPost?.id)}
-                    status={wasteReportPost?.status as string}
-                    cleanerId={String(wasteReportPost?.cleaner?.id)}
-                  />
-                ) : null}
-              </View>
-            </BottomView>
           </>
         )}
-      </BottomModalSheet>
-    </>
+      </BottomSheetModal>
+    </WastePostDetailContext.Provider>
   );
 };
 
-const LabelledContent = ({
-  label,
-  iconName,
-  content,
-}: {
-  label: string;
-  iconName: string;
-  content: string;
-}) => {
-  const { theme } = useTheme();
-  return (
-    <ListItem
-      bottomDivider
-      style={{
-        alignItems: "center",
-        flexDirection: "row",
-        gap: 8,
-      }}
-    >
-      <Icon name={iconName} size={20} color={theme.colors.grey3} />
-      <ListItem.Content>
-        <ListItem.Title>
-          <Text style={{ fontSize: 14, fontWeight: "bold" }}>{label}</Text>
-        </ListItem.Title>
-        <ListItem.Subtitle>{content}</ListItem.Subtitle>
-      </ListItem.Content>
-    </ListItem>
-  );
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+});
+
+const useWastePostDetailContext = () => {
+  return useContext(WastePostDetailContext);
 };
+
 const AvailableInProgButton = ({
   postId,
   status,
@@ -332,9 +402,11 @@ const InProgressButton = ({
 const DeleteButton = ({
   postId,
   onSuccess,
+  closeBottomSheet,
 }: {
   postId: string;
   onSuccess?: () => void;
+  closeBottomSheet: () => void;
 }) => {
   const mutation = useDeleteWastReport({
     async onError(error) {
@@ -343,6 +415,7 @@ const DeleteButton = ({
     },
     async onSuccess() {
       onSuccess?.();
+      closeBottomSheet();
     },
   });
   const handleDelete = useCallback(() => {
@@ -363,78 +436,8 @@ const DeleteButton = ({
   );
 };
 
-const ImageGradientUser = (detail: WastePost) => {
-  const { theme } = useTheme();
-  return (
-    <View
-      style={{
-        width: "100%",
-        position: "relative",
-      }}
-    >
-      <Image
-        style={{
-          height: 200,
-          width: "100%",
-          objectFit: "contain",
-        }}
-        placeholder={{ blurhash: detail.thumbnail.hash }}
-        source={{
-          //@ts-ignore
-          uri: detail.thumbnail.img_file,
-        }}
-      />
-      <LinearGradient
-        colors={["transparent", "rgba(0,0,0,0.8)"]}
-        start={{ x: 0, y: 0.1 }}
-        end={{ y: 1, x: 0 }}
-        style={{
-          position: "absolute",
-          bottom: 0,
-          padding: 12,
-          width: "100%",
-          justifyContent: "space-between",
-          flexDirection: "row",
-        }}
-      >
-        <View
-          transparent
-          style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-        >
-          <Avatar
-            size={40}
-            rounded
-            source={{ uri: detail.posted_by.photo?.img_file }}
-            containerStyle={{ backgroundColor: theme.colors.error }}
-          />
-          <View transparent>
-            <Text
-              style={{
-                fontWeight: "bold",
-                fontSize: 16,
-                color: theme.colors.white,
-              }}
-            >
-              {detail.posted_by.first_name} {detail.posted_by.last_name}
-            </Text>
-            <Text
-              style={{
-                fontWeight: "light",
-                fontSize: 12,
-                color: theme.colors.white,
-              }}
-            >
-              {detail.created_at as string} USERID: {detail.posted_by.id}
-            </Text>
-          </View>
-        </View>
-        <View></View>
-      </LinearGradient>
-    </View>
-  );
-};
-
-export const WasteContentFAB = ({ onClose }: any) => {
+export const WasteContentFAB = () => {
+  const { close } = useWastePostDetailContext()!;
   const { top, left } = useSafeAreaInsets();
   const { theme } = useTheme();
   return (
@@ -448,7 +451,7 @@ export const WasteContentFAB = ({ onClose }: any) => {
       color={theme.colors.background}
       icon={{ name: "arrow-back", color: theme.colors.black }}
       onPress={() => {
-        onClose();
+        close();
       }}
     />
   );

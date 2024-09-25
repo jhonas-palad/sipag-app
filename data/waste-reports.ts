@@ -50,7 +50,6 @@ export const useGetAllWasteReports = (
       },
       refetchInterval: minToSec(5),
       ...opts,
-
     }
   ) as any;
 };
@@ -314,55 +313,4 @@ export const useWasteReportActivities = (
   });
 };
 
-export const useRealTimeWasteReportActivities = () => {
-  const queryClient = useQueryClient();
-  const handleSetQueryData = useCallback(
-    (event: WebSocketEventMap["message"]) => {
-      const { message } = JSON.parse(event.data);
-      queryClient.setQueryData(
-        [WASTE_REPORT_ACTIVITIES],
-        (oldResponse: SuccessResponseData<any>) => {
-          return produce(oldResponse, (draftResponse) => {
-            draftResponse.data = [message, ...draftResponse.data];
-          });
-        }
-      );
-      queryClient.setQueryData(
-        [WASTE_REPORTS],
-        (oldResponse: SuccessResponseData<WastePost[]>) => {
-          return produce(oldResponse, (draftResponse) => {
-            //Add the post in the list
-            if (
-              message.activity === "ADDED_POST" &&
-              draftResponse.data.findIndex(
-                (item: WastePost) => item.id === message.post.id
-              ) === -1
-            ) {
-              draftResponse.data = [message.post, ...draftResponse.data];
 
-              return;
-            }
-            //Modify the waste post in the list
-            draftResponse.data = draftResponse.data.map((post: WastePost) => {
-              if (String(post.id) !== String(message.post.id)) {
-                return post;
-              }
-              return message.post;
-            });
-          });
-        }
-      );
-    },
-    [queryClient]
-  );
-
-  const ws = useWs("waste-report-activities/", {
-    onMessage: handleSetQueryData,
-    onError: (e) =>
-      log.error("Failed to connect to waste-report-activites/ ws endpoint"),
-    onOpen(event) {
-      log.info("Connected to waste-report-activities/ ws endpoint");
-    },
-  });
-  return ws;
-};

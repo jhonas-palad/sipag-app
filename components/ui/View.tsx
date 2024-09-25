@@ -29,6 +29,7 @@ export const BottomView = ({ style, children, ...props }: ViewProps) => {
   const { theme } = useTheme();
   return (
     <View
+      transparent
       style={[
         {
           position: "absolute",

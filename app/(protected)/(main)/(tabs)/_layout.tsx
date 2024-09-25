@@ -1,7 +1,9 @@
 import { Tabs } from "expo-router";
 import { COLOR_PALLETE } from "@/config/colors";
 import { TabBar } from "@/components/tabs/TabBar";
+import { useRealtimeAnnouncements } from "@/hooks/queries/useRealtimeAnnouncements";
 export const HomeTabsLayout = ({ segment }: any) => {
+  useRealtimeAnnouncements();
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
@@ -17,9 +19,9 @@ export const HomeTabsLayout = ({ segment }: any) => {
         }}
       />
       <Tabs.Screen
-        name="activities"
+        name="announcements"
         options={{
-          title: "Activities",
+          title: "Announcements",
           tabBarBadge: "",
           headerShown: true,
           headerLeft: () => null,

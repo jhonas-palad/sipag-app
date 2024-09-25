@@ -8,10 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuthSession } from "@/store/auth";
 import { useShallow } from "zustand/react/shallow";
 import { Image } from "expo-image";
-import {
-  useRealTimeWasteReportActivities,
-  useWasteReportActivitiesPrefetch,
-} from "@/data/waste-reports";
+import { Link } from "expo-router";
 
 type Props = {};
 
@@ -20,9 +17,6 @@ const IndexPage = (props: Props) => {
   const navigation = useNavigation();
 
   const user = useAuthSession(useShallow((state) => state.user));
-
-  // useRealTimeWasteReportActivities();
-  useWasteReportActivitiesPrefetch();
 
   return (
     <View transparent style={[styles.container]}>

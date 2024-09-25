@@ -56,7 +56,9 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
       <DrawerItem
         label="Points"
         icon={() => <Icon name="emoji-events" />}
-        onPress={() => {}}
+        onPress={() => {
+          router.push("/points");
+        }}
       />
       <DrawerItem
         label="Settings"

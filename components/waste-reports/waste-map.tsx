@@ -59,6 +59,7 @@ export const WasteMapView = () => {
             loading={isFetching || isLoading}
           />
           {selectedPost && <WastePostContent selectedPost={selectedPost} />}
+          {/* <WastePostContent selectedPost={"113"} /> */}
         </>
       }
     >
