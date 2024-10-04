@@ -4,8 +4,8 @@ import {
   ViewStyle,
   RefreshControl,
 } from "react-native";
-import React, { useCallback, useMemo } from "react";
-import { Avatar, useTheme } from "@rneui/themed";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Avatar, Button, useTheme } from "@rneui/themed";
 import { View } from "@/components/ui/View";
 import { Text } from "@/components/ui/Text";
 import ErrorScreenContainer from "@/components/ErrorScreenContainer";
@@ -14,13 +14,30 @@ import { dateFormat } from "@/utils/date";
 import { useGetAnnouncements } from "@/hooks/queries/useGetAnnouncements";
 import { useRefreshQuery } from "@/hooks/queries/useRefreshQuery";
 import { KEYWORDS } from "@/lib/constants";
+import { usePushNotifications } from "@/components/PushNotificationProvider";
+import { useFocusEffect } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 type Props = {};
 
 const AnnoucementsScreen = (props: Props) => {
   const { theme } = useTheme();
-  const { data, isLoading, error, isError } = useGetAnnouncements();
+  const { data, isLoading, isError } = useGetAnnouncements();
+  const queryClient = useQueryClient();
+  const { notification, resetCount } = usePushNotifications();
   const handleRefresh = useRefreshQuery({
     queryKey: [KEYWORDS.ANNOUNCEMENTS.base],
+  });
+
+  useEffect(() => {
+    if (notification) {
+      queryClient.invalidateQueries({
+        queryKey: [KEYWORDS.ANNOUNCEMENTS.base],
+      });
+    }
+  }, [notification, queryClient]);
+
+  useFocusEffect(() => {
+    resetCount();
   });
   const renderItem = useCallback(
     ({ item }: any) => {
@@ -68,7 +85,7 @@ const AnnoucementsScreen = (props: Props) => {
   const renderEmpty = useCallback(() => {
     return (
       <View transparent>
-        <Text h4>No activities at the moment 🌿</Text>
+        <Text h4>No announcements at the moment 🌿</Text>
       </View>
     );
   }, []);

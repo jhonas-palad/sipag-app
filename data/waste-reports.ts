@@ -16,16 +16,61 @@ import { WastePost } from "@/types/maps";
 import { type SuccessResponseData } from "@/types/response";
 import { useAuthSession } from "@/store/auth";
 import { useShallow } from "zustand/react/shallow";
-import { log } from "@/utils/logger";
+
 import { produce } from "immer";
-import { useWs } from "@/hooks/useWebSocket";
-import { useCallback, useEffect } from "react";
+
 import { Router, useRouter } from "expo-router";
 import { minToSec } from "@/lib/util";
+import { KEYWORDS } from "@/lib/constants";
 
 const ENDPOINT = "/api/v1/waste-reports/";
 export const WASTE_REPORTS = "WASTE_REPORTS";
 
+export const useGetFilteredWasteReports = (
+  params: string,
+  opts?: Omit<
+    UseQueryOptions<
+      SuccessResponseData<WastePost[]>,
+      ResponseError,
+      WastePost[]
+    >,
+    "queryKey" | "queryFn" | "select"
+  >
+) => {
+  let url = ENDPOINT;
+  const { token, user } = useAuthSession(
+    useShallow((state) => ({ token: state.token, user: state.user }))
+  );
+  const router = useRouter();
+  let paramsQ = "?";
+  switch (params) {
+    case "pending":
+      paramsQ += "status=INPROGRESS&";
+      break;
+    case "available":
+      paramsQ += "status=AVAILABLE&";
+      break;
+    case "cleared":
+      paramsQ += "status=CLEARED&";
+      break;
+    case "myposts":
+      paramsQ += `posted_by=${user?.id}&`;
+  }
+
+  url += paramsQ;
+  return useQuery<SuccessResponseData<WastePost[]>, ResponseError, WastePost[]>(
+    {
+      queryKey: [WASTE_REPORTS, params],
+      async queryFn() {
+        return (await getDataRedirect(url, token, {}, router)) as any;
+      },
+      select(data) {
+        return data.data as WastePost[];
+      },
+      ...opts,
+    }
+  ) as any;
+};
 export const useGetAllWasteReports = (
   opts?: Omit<
     UseQueryOptions<
@@ -48,7 +93,6 @@ export const useGetAllWasteReports = (
       select(data) {
         return data.data as WastePost[];
       },
-      refetchInterval: minToSec(5),
       ...opts,
     }
   ) as any;
@@ -82,35 +126,6 @@ export const useGetWasteReportPostDetail = (
 
   return q;
 };
-
-// const useUpdateWasteReportFromCache = (id: string | null, data: WastePost) => {
-//   const queryClient = useQueryClient();
-
-//   useEffect(() => {
-//     if (!id || !data) {
-//       return;
-//     }
-//     console.log("WEQWE");
-//     queryClient.setQueryData(
-//       [WASTE_REPORTS],
-//       (cachedValue: SuccessResponseData<WastePost[]>) => {
-//         return produce(cachedValue, (draft) => {
-//           if (draft) {
-//             return;
-//           }
-//           const index = (
-//             draft as SuccessResponseData<WastePost[]>
-//           ).data.findIndex((wastePost: WastePost) => +wastePost.id === +id);
-//           if (index === -1) {
-//             return;
-//           }
-//           // console.log('qqweqweqweqweqw',draft.data[index], data?.status);
-//           (draft as SuccessResponseData<WastePost[]>).data[index] = data;
-//         });
-//       }
-//     );
-//   }, [id, data, queryClient]);
-// };
 
 export const useDeleteWastReport = (
   opts?: UseMutationOptions<SuccessResponseData<unknown>, ResponseError, string>
@@ -196,14 +211,7 @@ export const useCreateReportPost = (
     },
     ...opts,
     async onSuccess(data, variables, context) {
-      queryClient.setQueryData(
-        [WASTE_REPORTS],
-        (oldResponse: SuccessResponseData<WastePost[]>) => {
-          return produce(oldResponse, (draftResponse) => {
-            draftResponse.data = [data.data, ...draftResponse.data];
-          });
-        }
-      );
+      queryClient.invalidateQueries({ queryKey: [WASTE_REPORTS] });
       await opts?.onSuccess?.(data, variables, context);
     },
   });
@@ -248,9 +256,19 @@ export const useWasteReportActions = (
       )) as SuccessResponseData<WastePost>;
     },
     async onSuccess(data, variables, context) {
+      console.log({ variables });
       queryClient.invalidateQueries({
         queryKey: [WASTE_REPORTS],
       });
+      if (variables.action === "done") {
+        [KEYWORDS.ACCOMPLISHED_WASTE_REPORTS, KEYWORDS.CLEANER_POINTS].forEach(
+          (queryKey) => {
+            queryClient.invalidateQueries({
+              queryKey: [queryKey],
+            });
+          }
+        );
+      }
       queryClient.setQueryData(
         [WASTE_REPORTS + id],
         (oldState: SuccessResponseData<WastePost>) => {
@@ -312,5 +330,3 @@ export const useWasteReportActivities = (
     ...opts,
   });
 };
-
-

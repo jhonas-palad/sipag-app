@@ -1,28 +1,20 @@
 import "react-native-reanimated";
 import React, { useRef, useMemo, useCallback, useEffect } from "react";
-import { StyleSheet, ActivityIndicator, Pressable } from "react-native";
+import { StyleSheet, ActivityIndicator } from "react-native";
 import { View } from "@/components/ui/View";
 import { useShallow } from "zustand/react/shallow";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
-import { Badge, Text, useTheme } from "@rneui/themed";
-import { Button } from "@/components/ui/Button";
+import { Text, useTheme } from "@rneui/themed";
 import BottomSheet, {
-  BottomSheetFlatList,
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
-import {
-  useWasteContainerState,
-  useWasteReportStore,
-} from "@/store/waste-report";
-import { Image } from "expo-image";
-import { useMapContext } from "@/components/Maps";
+import { useWasteReportStore } from "@/store/waste-report";
 import { WastePost } from "@/types/maps";
-import { format } from "date-fns";
-import { useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "expo-router";
 import BottomSheetHandleComponent from "@/components/waste-reports/bottom-sheet-handle-component";
+import WasteReportsTagsProvider from "./waste-reports-tags-provider";
 
+import { WastePostsList } from "./waste-posts-list";
 //Currently selected marker details
 export const WastePostsBottomSheet = ({
   posts,
@@ -38,7 +30,6 @@ export const WastePostsBottomSheet = ({
       selectedPost: state.selectedPost,
     }))
   );
-  const queryClient = useQueryClient();
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const snapPoints = useMemo(() => ["40%", "60%", "80%"], []);
 
@@ -92,7 +83,9 @@ export const WastePostsBottomSheet = ({
             </Text>
           </BottomTextWrapper>
         ) : (
-          <WastePostList posts={posts} />
+          <WasteReportsTagsProvider>
+            <WastePostsList posts={posts} />
+          </WasteReportsTagsProvider>
         )}
       </BottomSheet>
     </>
@@ -112,150 +105,6 @@ const BottomTextWrapper = ({ children }: { children: React.ReactNode }) => {
     >
       {children}
     </View>
-  );
-};
-
-const WastePostList = ({ posts }: { posts: WastePost[] }) => {
-  const router = useRouter();
-  const handlePushToCreateWasteReportScreen = useCallback(() => {
-    router.push("/(home)/create-waste-report");
-  }, [router]);
-  const renderItemPost = useCallback(
-    ({ item }: { item: WastePost }) => <WasteItemPost {...item} />,
-    []
-  );
-  const renderEmptyListComponent = useCallback(
-    () => (
-      <BottomTextWrapper>
-        <Text h4>Clean and Green! 🌿</Text>
-        <Text style={{ textAlign: "center" }}>
-          There's no trash in your barangay at the moment. Enjoy the clean
-          surroundings and refresh the screen for any updates.
-        </Text>
-        <Button
-          title="Post your waste concerns"
-          onPress={handlePushToCreateWasteReportScreen}
-        />
-      </BottomTextWrapper>
-    ),
-    [handlePushToCreateWasteReportScreen]
-  );
-  const renderHeaderComponent = () => (
-    <View style={{ paddingTop: 12 }}>
-      <Text h4 style={{ paddingHorizontal: 24, paddingVertical: 4 }}>
-        Community Waste Reports
-      </Text>
-    </View>
-  );
-  return (
-    <BottomSheetFlatList
-      bounces
-      ListHeaderComponent={renderHeaderComponent}
-      ListEmptyComponent={renderEmptyListComponent}
-      data={posts}
-      keyExtractor={({ id }) => id as string}
-      renderItem={renderItemPost}
-    />
-  );
-};
-export const WasteItemPost = (item: WastePost) => {
-  const { mapRef } = useMapContext();
-  const { theme } = useTheme();
-  const { setContainerState } = useWasteContainerState(
-    useShallow((state) => ({
-      setContainerState: state.setContainerState,
-    }))
-  );
-  const selectPost = useWasteReportStore((state) => state.selectPost);
-  const { longitude, latitude } = useMemo(
-    () => ({
-      longitude: item.location.lng,
-      latitude: item.location.lat,
-    }),
-    [item.location]
-  );
-  const statusColor = useMemo(() => {
-    switch (item.status) {
-      case "AVAILABLE":
-        return theme.colors.success;
-      case "INPROGRESS":
-        return theme.colors.warning;
-      case "CLEARED":
-        return theme.colors.primary;
-    }
-  }, [item.status, theme]);
-
-  const createdAt = useMemo(() => {
-    return format(new Date(item.created_at), "MMM dd, yyyy");
-  }, [item.created_at]);
-  const handleZoomtoMarker = () => {
-    mapRef.current?.animateCamera({
-      center: {
-        latitude,
-        longitude,
-      },
-      pitch: 12,
-    });
-    selectPost(item.id);
-    setContainerState({ showBtmModal: true });
-  };
-  return (
-    <Pressable
-      style={({ pressed }) => ({
-        opacity: pressed ? 0.5 : 1,
-      })}
-      onPress={handleZoomtoMarker}
-    >
-      <View
-        style={{
-          flexDirection: "row",
-          marginVertical: 12,
-          marginHorizontal: 16,
-        }}
-      >
-        <View>
-          <Image
-            style={{ height: 100, width: 100 }}
-            source={item.thumbnail.img_file}
-            placeholder={item.thumbnail.hash}
-          />
-        </View>
-        <View
-          style={{
-            marginLeft: 12,
-            flexDirection: "column",
-            flex: 1,
-          }}
-        >
-          <Badge
-            value={item.status}
-            badgeStyle={{
-              backgroundColor: "transparent",
-              width: "auto",
-              alignSelf: "flex-start",
-            }}
-            textStyle={{
-              color: statusColor,
-              fontWeight: "bold",
-              margin: 0,
-              paddingHorizontal: 0,
-            }}
-          />
-          <Text numberOfLines={1} style={{ fontSize: 18, fontWeight: "bold" }}>
-            {item.title}
-          </Text>
-          <Text numberOfLines={1} style={{ fontSize: 16 }}>
-            {item.description}
-          </Text>
-          <Text
-            numberOfLines={1}
-            style={{ fontSize: 15, color: theme.colors.grey0 }}
-          >
-            {createdAt}
-          </Text>
-        </View>
-      </View>
-    </Pressable>
   );
 };
 

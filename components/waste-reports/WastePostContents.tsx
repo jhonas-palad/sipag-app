@@ -28,17 +28,18 @@ import {
 
 import { useWasteReportStore } from "@/store/waste-report";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useMapContext } from "@/components/Maps";
+
 import { FAB } from "@/components/ui/FAB";
 import { Button } from "@/components/ui/Button";
 import { useAuthSession } from "@/store/auth";
-import Toast from "react-native-simple-toast";
+import { toast } from "sonner-native";
 import { log } from "@/utils/logger";
 import { useRouter } from "expo-router";
 import { ErrorBottomSheetView } from "../bottom-sheet/ErrorBottomSheetView";
 import { ActivityIndicator, StyleSheet } from "react-native";
 import { UserProfileBox } from "./UserProfileBox";
 import { formatPPpp } from "@/lib/date";
+import { useToastVariants } from "../toast";
 
 const BOTTOM_SHEET_NAME = "waste-post-detail";
 
@@ -58,7 +59,6 @@ export const WastePostContent = ({
   const modalRef = useRef<BottomSheetModal>(null);
   const [showBack, setShowBack] = useState(true);
   const { theme } = useTheme();
-  const { mapRef } = useMapContext();
   const selectPost = useWasteReportStore((state) => state.selectPost);
   const user = useAuthSession(useShallow((state) => state.user));
   const {
@@ -308,16 +308,18 @@ const AvailableInProgButton = ({
   postId: string;
   status: string;
 }) => {
+  const toastVariant = useToastVariants();
   const { mutate, isPending } = useWasteReportActions(postId, {
     mutationKey: [status],
     async onSuccess() {
-      Toast.show("Accepted", Toast.LONG);
+      toastVariant.success({ message: "Accepted" });
     },
     onError(error) {
-      Toast.show(
-        error.errors?.cleaner ?? "Can't accept the task at the moment",
-        Toast.LONG
-      );
+      toastVariant.error({
+        message: "Oh no! Something went wrong.",
+        description:
+          error.errors?.cleaner ?? "Can't accept the task at the moment",
+      });
     },
   });
   const handleAccept = () => {
@@ -348,6 +350,7 @@ const InProgressButton = ({
   closeBottomSheet: () => void;
 }) => {
   const router = useRouter();
+  const toastVariants = useToastVariants();
   const { mutate, isPending } = useWasteReportActions(postId, {
     mutationKey: [status],
     async onSuccess(data, variables) {
@@ -355,18 +358,22 @@ const InProgressButton = ({
         closeBottomSheet();
         router.push("/(home)/finished-task");
       }
-      Toast.show(
-        `Task ${variables.action === "done" ? "completed" : "cancelled"}.`,
-        Toast.LONG
-      );
+
+      if (variables.action === "done") {
+        toastVariants.success({
+          message: "Horaay!",
+          description: "Task completed",
+        });
+      } else {
+        toast("Task was cancelled");
+      }
     },
     onError(error) {
       if (typeof error.errors === "object") {
         if (error.errors?.count) {
-          Toast.show(
-            "Already reached the maximum points, redeem it first to reset the count",
-            Toast.SHORT
-          );
+          toast("Already reached the maximum points", {
+            description: "Redeem it first to reset the count",
+          });
         }
       }
       log.error(error.errors);
@@ -411,7 +418,7 @@ const DeleteButton = ({
   const mutation = useDeleteWastReport({
     async onError(error) {
       let errMsg = "An error occurred";
-      Toast.show(`${errMsg}: ${error.status ?? "None"}`, Toast.LONG);
+      toast(`${errMsg}: ${error.status ?? "None"}`);
     },
     async onSuccess() {
       onSuccess?.();

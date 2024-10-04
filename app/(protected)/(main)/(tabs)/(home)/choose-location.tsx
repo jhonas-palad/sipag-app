@@ -11,6 +11,7 @@ import { Text } from "@rneui/themed";
 import { FakeOverlayMarker } from "./FakeOverlayMarker";
 import { useLatLngStore } from "@/store/store-latlng";
 import { useShallow } from "zustand/react/shallow";
+import { MAP_CONFIG } from "@/lib/constants";
 
 type Props = {};
 
@@ -22,15 +23,7 @@ const ChooseLocation = (props: Props) => {
       setLatLangStore: state.setLatLng,
     }))
   );
-  const initialRegion = useMemo<Region>(
-    () => ({
-      latitude: 14.103991131539573,
-      latitudeDelta: 0.017963974717314812,
-      longitude: 121.11668379977345,
-      longitudeDelta: 0.009622089564814473,
-    }),
-    []
-  );
+  const initialRegion = useMemo<Region>(() => ({ ...MAP_CONFIG }), []);
 
   const [geoLocation, setGeolocation] = useState<LatLng>({
     latitude: initialRegion.latitude,

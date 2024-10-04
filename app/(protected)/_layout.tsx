@@ -4,10 +4,11 @@ import { KEYWORDS } from "@/lib/constants";
 import { log } from "@/utils/logger";
 import { Redirect, Slot } from "expo-router";
 import React from "react";
-
+import { PushNotificationProvider } from "@/components/PushNotificationProvider";
+import { ResponseError } from "@/errors/response-error";
 type Props = {};
 
-const AuthenticatedLayout = (props: Props) => {
+const ProtectedLayout = (props: Props) => {
   const [tokenQuery, userQuery] = useVerifiedUser();
 
   if (tokenQuery.isLoading || userQuery.isLoading) {
@@ -17,8 +18,8 @@ const AuthenticatedLayout = (props: Props) => {
   if (tokenQuery.isError || userQuery.isError) {
     if (
       tokenQuery.error?.message === KEYWORDS.NO_TOKEN_FOUND ||
-      tokenQuery.error?.status === 401 ||
-      userQuery.error?.status === 401
+      (tokenQuery.error as ResponseError)?.status === 401 ||
+      (userQuery.error as ResponseError)?.status === 401
     ) {
       return <Redirect href="/auth" />;
     } else if (userQuery.error?.message === KEYWORDS.NOT_VERIFIED_USER) {
@@ -28,7 +29,11 @@ const AuthenticatedLayout = (props: Props) => {
     return <Redirect href="/error" />;
   }
 
-  return <Slot />;
+  return (
+    <PushNotificationProvider>
+      <Slot />
+    </PushNotificationProvider>
+  );
 };
 
-export default AuthenticatedLayout;
+export default ProtectedLayout;

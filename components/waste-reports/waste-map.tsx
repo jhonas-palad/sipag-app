@@ -18,6 +18,7 @@ import { useGetAllWasteReports } from "@/data/waste-reports";
 import { WastePostContent } from "./WastePostContents";
 import { GarbageSVG } from "@/components/svg/garbage";
 import { useShallow } from "zustand/react/shallow";
+import { MAP_CONFIG } from "@/lib/constants";
 export const WasteMapView = () => {
   const { theme } = useTheme();
 
@@ -33,15 +34,7 @@ export const WasteMapView = () => {
     }))
   );
 
-  const barangaySalaGeoPoints = useMemo<Region>(
-    () => ({
-      latitude: 14.100202432834427,
-      latitudeDelta: 0.03370272545660313,
-      longitude: 121.11851876601577,
-      longitudeDelta: 0.016310177743420695,
-    }),
-    []
-  );
+  const geopoints = useMemo<Region>(() => ({ ...MAP_CONFIG }), []);
   return (
     <Maps
       showsMyLocationButton={false}
@@ -50,7 +43,7 @@ export const WasteMapView = () => {
       toolbarEnabled={false}
       loadingEnabled
       loadingIndicatorColor={theme.colors.primary}
-      initialRegion={barangaySalaGeoPoints}
+      initialRegion={geopoints}
       overlayChildren={
         <>
           <WastePostsBottomSheet

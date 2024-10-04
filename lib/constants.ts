@@ -4,7 +4,17 @@ export const KEYWORDS = {
   USER_DETAIL: "USER_DETAIL",
   ANNOUNCEMENTS: {
     base: "ANNOUNCEMENTS",
-    private: 'PRIVATE',
-    public: 'PUBLIC'
+    private: "PRIVATE",
+    public: "PUBLIC",
   },
+  REDEEM_HISTORY: "REDEEM_HISTORY",
+  ACCOMPLISHED_WASTE_REPORTS: "ACCOMPLISHED_WASTE_REPORTS",
+  CLEANER_POINTS: "CLEANER_POINTS",
+};
+
+export const MAP_CONFIG = {
+  latitude: 13.935178988020958,
+  latitudeDelta: 0.017963974717314812,
+  longitude: 121.21480122200809,
+  longitudeDelta: 0.009622089564814473,
 };

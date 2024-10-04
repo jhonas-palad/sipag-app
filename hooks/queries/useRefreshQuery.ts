@@ -9,3 +9,12 @@ export const useRefreshQuery = (filter: InvalidateQueryFilters) => {
 
   return handleRefresh;
 };
+export const useInvalidateQuery = (filter: InvalidateQueryFilters) => {
+  const queryClient = useQueryClient();
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries(filter);
+  };
+
+  return handleRefresh;
+};

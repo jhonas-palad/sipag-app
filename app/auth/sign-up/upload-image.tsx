@@ -1,10 +1,13 @@
 import { StyleSheet } from "react-native";
 import { View } from "@/components/ui/View";
 import UploadPhotoForm from "@/components/forms/auth/UploadPhotoForm";
+import { ImagePickerOptions } from "@/components/image-picker-options";
 export default function ImagePickerExample() {
   return (
     <View style={styles.container}>
-      <UploadPhotoForm />
+      <ImagePickerOptions>
+        <UploadPhotoForm />
+      </ImagePickerOptions>
     </View>
   );
 }

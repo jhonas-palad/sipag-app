@@ -4,9 +4,11 @@ import React from "react";
 import { useFocusEffect } from "expo-router";
 import { View } from "@/components/ui/View";
 import { CreateWasteReportForm } from "./CreateWasteReportForm";
+import { ImagePickerOptions } from "@/components/image-picker-options";
+
 type Props = {};
 
-const AddContents = (props: Props) => {
+const CreateWasteReportScreen = (props: Props) => {
   const setHideTab = useToggleHideTab((state) => state.setTabHide);
   useFocusEffect(() => {
     setHideTab(true);
@@ -16,7 +18,9 @@ const AddContents = (props: Props) => {
   });
   return (
     <View style={[styles.container, { flex: 1 }]}>
-      <CreateWasteReportForm />
+      <ImagePickerOptions>
+        <CreateWasteReportForm />
+      </ImagePickerOptions>
     </View>
   );
 };
@@ -28,4 +32,4 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
-export default AddContents;
+export default CreateWasteReportScreen;

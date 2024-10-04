@@ -79,9 +79,6 @@ export const SigninForm = (props: Props) => {
         queryClient.setQueryData([KEYWORDS.USER_DETAIL], () => {
           return responseData.user;
         });
-        session.setToken(responseData.token);
-
-        session.setUser(responseData.user);
         if (!responseData.user.is_verified) {
           router.replace("/auth/not-verified");
         }
@@ -89,6 +86,9 @@ export const SigninForm = (props: Props) => {
         log.debug("Navigating to home screen");
       } catch (err) {
         log.error(err);
+      } finally {
+        session.setToken(responseData?.token ?? null);
+        session.setUser(responseData?.user ?? null);
       }
     },
   });

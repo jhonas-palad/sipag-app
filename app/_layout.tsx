@@ -8,6 +8,8 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner-native";
+import NetinfoProvider from "@/components/netinfo-provider";
+
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -38,13 +40,15 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider>
-          <BottomSheetModalProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(onboarding)" />
-              <Stack.Screen name="(protected)" />
-              <Stack.Screen name="auth" />
-            </Stack>
-          </BottomSheetModalProvider>
+          <NetinfoProvider>
+            <BottomSheetModalProvider>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="(onboarding)" />
+                <Stack.Screen name="(protected)" />
+                <Stack.Screen name="auth" />
+              </Stack>
+            </BottomSheetModalProvider>
+          </NetinfoProvider>
           <Toaster />
         </ThemeProvider>
       </QueryClientProvider>

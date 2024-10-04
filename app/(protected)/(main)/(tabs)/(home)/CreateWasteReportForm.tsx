@@ -10,12 +10,10 @@ import { View } from "@/components/ui/View";
 import { Button } from "@/components/ui/Button";
 import { BottomWrapper } from "@/components/BottomWrapper";
 
-import { usePickImage } from "@/hooks/usePickImage";
-
 import { useLatLngStore } from "@/store/store-latlng";
 
 import { useShallow } from "zustand/react/shallow";
-
+import { toast } from "sonner-native";
 import { Image } from "expo-image";
 import { Link, useRouter } from "expo-router";
 import {
@@ -28,9 +26,10 @@ import { NON_FIELD_ERROR, ERR_DETAIL } from "@/constants/response-props";
 import { ResponseError } from "@/errors/response-error";
 import Toast from "react-native-simple-toast";
 import { log } from "@/utils/logger";
-
+import { useImagePickerContext } from "@/components/image-picker-options";
 export const CreateWasteReportForm = () => {
   const { theme } = useTheme();
+  const { imageData, openPickers } = useImagePickerContext();
   const router = useRouter();
   const { latitude, longitude, setLatLng } = useLatLngStore(
     useShallow((state) => ({
@@ -95,24 +94,34 @@ export const CreateWasteReportForm = () => {
         form.setError("root", {
           message: errMsg,
         });
-        Toast.show(errMsg, Toast.LONG);
+        toast(errMsg);
       },
       async onSuccess(data) {
         router.dismissAll();
       },
     });
-  const { mutateAsync, isPending } = usePickImage({
-    onSuccess(data) {
+
+  useEffect(() => {
+    if (imageData) {
       form.setValue("image", {
-        url: data.uri,
-        mimeType: data.mimeType as string,
-        fileName: data.fileName as string,
+        url: imageData.uri,
+        mimeType: imageData.mimeType as string,
+        fileName: imageData.fileName as string,
       });
-    },
-  });
-  const handlePickImage = useCallback(async () => {
-    await mutateAsync();
-  }, [mutateAsync]);
+    }
+  }, [form, imageData]);
+  // const { mutateAsync, isPending } = usePickImage({
+  //   onSuccess(data) {
+  //     form.setValue("image", {
+  //       url: data.uri,
+  //       mimeType: data.mimeType as string,
+  //       fileName: data.fileName as string,
+  //     });
+  //   },
+  // });
+  const handlePickImage = useCallback(() => {
+    openPickers();
+  }, [openPickers]);
 
   const handleSubmit = useCallback(
     async (formData: WasteReportSchemaT) => {
@@ -190,7 +199,7 @@ export const CreateWasteReportForm = () => {
                       style={{ width: "100%", height: 300 }}
                     />
                   ) : (
-                    <>
+                    <View transparent>
                       <Button type="clear" onPress={handlePickImage} size="sm">
                         <Icon name="image" color={theme.colors.grey0} />
                         <Text
@@ -202,7 +211,7 @@ export const CreateWasteReportForm = () => {
                       <FormMessage>
                         {fieldState.error ? "Please upload an image" : null}
                       </FormMessage>
-                    </>
+                    </View>
                   )}
                 </View>
               );
@@ -258,7 +267,7 @@ export const CreateWasteReportForm = () => {
           />
         </View>
 
-        {(isPending || postPending) && !form.formState.isDirty && (
+        {postPending && !form.formState.isDirty && (
           <LinearProgress variant="indeterminate" color="blue" />
         )}
         <BottomWrapper>

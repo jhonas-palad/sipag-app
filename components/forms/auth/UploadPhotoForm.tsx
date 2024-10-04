@@ -1,9 +1,8 @@
 import { View } from "@/components/ui/View";
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/Form";
 import { useForm } from "react-hook-form";
 import { Avatar, useTheme, Text, Button } from "@rneui/themed";
-import { usePickImage } from "@/hooks/usePickImage";
 import { useSignupFormState } from "@/store/create-account-form";
 import { useShallow } from "zustand/react/shallow";
 import { useRouter } from "expo-router";
@@ -11,7 +10,7 @@ import { useCreateUser } from "@/data/users";
 import * as zod from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Toast from "react-native-simple-toast";
-import { log } from "@/utils/logger";
+import { useImagePickerContext } from "@/components/image-picker-options";
 type Props = {};
 const UploadPhotoSchema = zod.object({
   photo: zod
@@ -44,6 +43,7 @@ const UploadPhotoForm = (props: Props) => {
       photo: "",
     },
   });
+  const { imageData, openPickers } = useImagePickerContext();
   const { theme } = useTheme();
   const router = useRouter();
   const { mutate, status } = useCreateUser({
@@ -60,7 +60,7 @@ const UploadPhotoForm = (props: Props) => {
       reset();
     },
   });
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     mutate({
       first_name,
       last_name,
@@ -73,117 +73,114 @@ const UploadPhotoForm = (props: Props) => {
       },
       password,
     });
-  };
-
-  const { mutateAsync: pickImage, data: imageData } = usePickImage({
-    onError(error) {
-      if (!form.getValues("photo")) {
-        form.setError("photo", { message: "Please choose an image" });
-      }
-    },
-    onSuccess(data) {
-      form.setValue("photo", data.uri);
-      form.clearErrors();
-    },
-  });
+  }, [imageData, first_name, last_name, email, phone_number, password, mutate]);
+  useEffect(() => {
+    if (imageData) {
+      form.setValue("photo", imageData?.uri);
+    }
+  }, [imageData, form]);
   return (
-    <Form {...form}>
-      <View transparent style={{ alignItems: "center" }}>
-        <FormField
-          control={form.control}
-          name="photo"
-          render={({ field }) => {
-            return (
-              <FormItem>
-                <Avatar
-                  size={200}
-                  onPress={pickImage}
-                  source={field.value ? { uri: field.value } : undefined}
-                  title={field.value ? undefined : "--"}
-                  containerStyle={{
-                    borderRadius: 12,
-                    backgroundColor: theme.colors.grey3,
-                    overflow: "hidden",
-                    position: "relative",
-                    marginBottom: 16,
-                  }}
-                  // style={styles.image}
-                >
-                  <View
-                    style={{
-                      width: "100%",
-                      height: 35,
-                      bottom: 0,
-                      paddingBottom: 8,
-                      backgroundColor: theme.colors.grey0,
-                      opacity: 0.5,
-                      position: "absolute",
-                      alignItems: "center",
-                      justifyContent: "center",
+    <>
+      <Form {...form}>
+        <View transparent style={{ alignItems: "center" }}>
+          <FormField
+            control={form.control}
+            name="photo"
+            render={({ field }) => {
+              return (
+                <FormItem>
+                  <Avatar
+                    size={200}
+                    onPress={() => {
+                      openPickers();
                     }}
+                    source={field.value ? { uri: field.value } : undefined}
+                    title={field.value ? undefined : "--"}
+                    containerStyle={{
+                      borderRadius: 12,
+                      backgroundColor: theme.colors.grey3,
+                      overflow: "hidden",
+                      position: "relative",
+                      marginBottom: 16,
+                    }}
+                    // style={styles.image}
                   >
-                    <Text style={{ color: theme.colors.white }}>
-                      {imageData ? "Change" : "Upload"} Image
-                    </Text>
-                  </View>
-                </Avatar>
-                <FormMessage />
-              </FormItem>
-            );
-          }}
-        />
-        <View style={{ gap: 12, alignItems: "center" }}>
-          <Text h3 style={{ color: theme.colors.black }}>
-            {first_name} {last_name}
-          </Text>
-          {email && (
-            <View
-              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
-            >
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.grey2,
-                }}
+                    <View
+                      style={{
+                        width: "100%",
+                        height: 35,
+                        bottom: 0,
+                        paddingBottom: 8,
+                        backgroundColor: theme.colors.grey0,
+                        opacity: 0.5,
+                        position: "absolute",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text style={{ color: theme.colors.white }}>
+                        {imageData?.uri ? "Change" : "Upload"} Image
+                      </Text>
+                    </View>
+                  </Avatar>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
+          />
+          <View style={{ gap: 12, alignItems: "center" }}>
+            <Text h3 style={{ color: theme.colors.black }}>
+              {first_name} {last_name}
+            </Text>
+            {email && (
+              <View
+                style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
               >
-                Email
-              </Text>
-              <Text style={{ fontSize: 20, color: theme.colors.grey0 }}>
-                {email}
-              </Text>
-            </View>
-          )}
-          {phone_number && (
-            <View
-              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
-            >
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: theme.colors.grey2,
-                }}
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: theme.colors.grey2,
+                  }}
+                >
+                  Email
+                </Text>
+                <Text style={{ fontSize: 20, color: theme.colors.grey0 }}>
+                  {email}
+                </Text>
+              </View>
+            )}
+            {phone_number && (
+              <View
+                style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
               >
-                Mobile
-              </Text>
-              <Text style={{ fontSize: 20, color: theme.colors.grey0 }}>
-                {phone_number}
-              </Text>
-            </View>
-          )}
+                <Text
+                  style={{
+                    fontSize: 16,
+                    color: theme.colors.grey2,
+                  }}
+                >
+                  Mobile
+                </Text>
+                <Text style={{ fontSize: 20, color: theme.colors.grey0 }}>
+                  {phone_number}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
-      </View>
 
-      <Button
-        radius="lg"
-        size="lg"
-        title="Submit"
-        raised
-        loading={status === "pending"}
-        disabled={status === "pending"}
-        buttonStyle={{ borderWidth: 1.5 }}
-        onPress={form.handleSubmit(handleSubmit)}
-      />
-    </Form>
+        <Button
+          radius="lg"
+          size="lg"
+          title="Submit"
+          raised
+          loading={status === "pending"}
+          disabled={status === "pending"}
+          buttonStyle={{ borderWidth: 1.5 }}
+          onPress={form.handleSubmit(handleSubmit)}
+        />
+      </Form>
+    </>
   );
 };
 
